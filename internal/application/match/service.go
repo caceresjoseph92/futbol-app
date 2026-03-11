@@ -156,3 +156,17 @@ func (s *Service) FinishMatch(ctx context.Context, matchID uuid.UUID, score1, sc
 	}
 	return m, nil
 }
+
+// UpdateMatchDate actualiza la fecha y la info de arqueros de un partido.
+func (s *Service) UpdateMatchDate(ctx context.Context, matchID uuid.UUID, playedAt time.Time, goalkeeperInfo string) (*match.Match, error) {
+	m, err := s.matchRepo.FindByID(ctx, matchID)
+	if err != nil {
+		return nil, err
+	}
+	m.PlayedAt = playedAt
+	m.GoalkeeperInfo = goalkeeperInfo
+	if err := s.matchRepo.Update(ctx, m); err != nil {
+		return nil, fmt.Errorf("error actualizando partido: %w", err)
+	}
+	return m, nil
+}

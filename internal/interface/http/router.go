@@ -63,6 +63,7 @@ func NewRouter(
 		r.Get("/admin/matches/new", matchHandler.ShowCreate)
 		r.Post("/admin/matches", matchHandler.Create)
 		r.Get("/admin/matches/{id}/edit", matchHandler.ShowEdit)
+		r.Post("/admin/matches/{id}/date", matchHandler.UpdateDate)
 		r.Post("/admin/matches/{id}/players", matchHandler.AddPlayers)
 		r.Post("/admin/matches/{id}/generate", matchHandler.GenerateTeams)
 		r.Post("/admin/matches/{id}/transfer/{playerID}", matchHandler.TransferPlayer)

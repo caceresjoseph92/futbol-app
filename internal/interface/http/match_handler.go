@@ -254,6 +254,22 @@ func (h *MatchHandler) Publish(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/matches/"+id.String(), http.StatusSeeOther)
 }
 
+// UpdateDate actualiza la fecha y arqueros del partido.
+func (h *MatchHandler) UpdateDate(w http.ResponseWriter, r *http.Request) {
+	id, _ := uuid.Parse(chi.URLParam(r, "id"))
+	dateStr := r.FormValue("played_at")
+	playedAt, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		http.Error(w, "Fecha inválida", http.StatusBadRequest)
+		return
+	}
+	if _, err := h.matchService.UpdateMatchDate(r.Context(), id, playedAt, r.FormValue("goalkeeper_info")); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/admin/matches/"+id.String()+"/edit", http.StatusSeeOther)
+}
+
 // Finish registra el resultado del partido.
 func (h *MatchHandler) Finish(w http.ResponseWriter, r *http.Request) {
 	id, _ := uuid.Parse(chi.URLParam(r, "id"))
