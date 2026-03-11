@@ -4,6 +4,7 @@ package match
 
 import (
 	"errors"
+	"math/rand"
 	"sort"
 	"time"
 
@@ -104,7 +105,8 @@ func (m *Match) AssignTeams() error {
 	}
 
 	byRating := func(p []MatchPlayer) {
-		sort.Slice(p, func(i, j int) bool { return p[i].RatingSnapshot > p[j].RatingSnapshot })
+		rand.Shuffle(len(p), func(i, j int) { p[i], p[j] = p[j], p[i] })
+		sort.SliceStable(p, func(i, j int) bool { return p[i].RatingSnapshot > p[j].RatingSnapshot })
 	}
 
 	// Separar por posición primaria
