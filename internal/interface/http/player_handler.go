@@ -78,9 +78,14 @@ func (h *PlayerHandler) ShowEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	canPlay := map[string]bool{}
+	for _, pos := range p.CanPlayPositions {
+		canPlay[string(pos)] = true
+	}
 	h.tmpl.ExecuteTemplate(w, "players/form.html", map[string]any{
-		"Player": p,
-		"Action": "edit",
+		"Player":  p,
+		"Action":  "edit",
+		"CanPlay": canPlay,
 	})
 }
 
