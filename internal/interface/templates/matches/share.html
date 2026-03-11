@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Equipos — Compartir</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen p-6">
+  <div class="max-w-xl mx-auto space-y-6">
+
+    <div class="flex items-center justify-between">
+      <h1 class="text-xl font-bold text-gray-800">⚽ Equipos del partido</h1>
+      <a href="/" class="text-sm text-green-600 hover:underline">← Volver</a>
+    </div>
+
+    <!-- Vista para copiar -->
+    <div id="share-text" class="bg-white border rounded-2xl p-5 shadow-sm font-mono text-sm whitespace-pre-wrap text-gray-700">
+🔵 *Equipo 1*
+{{range .Team1}}
+• {{.PlayerName}} — {{.PrimaryPosition}}{{if .Notes}} ({{.Notes}}){{end}}
+{{end}}
+
+🔴 *Equipo 2*
+{{range .Team2}}
+• {{.PlayerName}} — {{.PrimaryPosition}}{{if .Notes}} ({{.Notes}}){{end}}
+{{end}}
+
+🧤 *Arqueros:* {{.Match.GoalkeeperInfo}}
+    </div>
+
+    <!-- Botón copiar -->
+    <button
+      onclick="copyToClipboard()"
+      class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl transition text-sm"
+    >
+      📋 Copiar para WhatsApp
+    </button>
+
+    <p id="copy-feedback" class="text-center text-green-600 text-sm hidden">
+      ¡Copiado! Pégalo en WhatsApp ✅
+    </p>
+  </div>
+
+  <script>
+    function copyToClipboard() {
+      const text = document.getElementById("share-text").innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const fb = document.getElementById("copy-feedback");
+        fb.classList.remove("hidden");
+        setTimeout(() => fb.classList.add("hidden"), 3000);
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>⚽ Futbol App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <style>
+    .team-card { transition: all 0.2s ease; }
+    .team-card:hover { transform: translateY(-2px); }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+
+  <!-- Navbar -->
+  <nav class="bg-green-700 text-white shadow-md">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="/" class="text-xl font-bold tracking-wide">⚽ Futbol App</a>
+      <div class="flex gap-4 items-center text-sm">
+        <a href="/" class="hover:underline">Partido</a>
+        <a href="/history" class="hover:underline">Historial</a>
+        {{if .IsAdmin}}
+          <a href="/admin/players" class="hover:underline">Jugadores</a>
+          <a href="/admin/matches/new" class="bg-white text-green-700 px-3 py-1 rounded font-semibold hover:bg-green-50">+ Partido</a>
+          <a href="/admin/users" class="hover:underline">Usuarios</a>
+        {{end}}
+        <form action="/logout" method="POST" class="inline">
+          <button class="hover:underline text-green-200">Salir</button>
+        </form>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Contenido principal -->
+  <main class="max-w-5xl mx-auto px-4 py-8">
+    {{template "content" .}}
+  </main>
+
+  <footer class="text-center text-gray-400 text-xs py-6">
+    Futbol App &copy; 2025
+  </footer>
+</body>
+</html>

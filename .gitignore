@@ -1,0 +1,17 @@
+# Binarios compilados
+bin/
+*.exe
+
+# Variables de entorno (contiene secretos)
+.env
+
+# Dependencias de Go (generadas)
+vendor/
+
+# Archivos del sistema
+.DS_Store
+
+# IDEs
+.idea/
+.vscode/
+*.swp

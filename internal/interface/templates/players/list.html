@@ -1,0 +1,76 @@
+{{define "content"}}
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold text-gray-800">Jugadores</h1>
+    <a href="/admin/players/new"
+       class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+      + Nuevo jugador
+    </a>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 border-b">
+        <tr>
+          <th class="text-left px-4 py-3 text-gray-600 font-semibold">Nombre</th>
+          <th class="text-left px-4 py-3 text-gray-600 font-semibold">Posición</th>
+          <th class="text-left px-4 py-3 text-gray-600 font-semibold">Notas</th>
+          {{if .IsAdmin}}
+            <th class="text-center px-4 py-3 text-gray-600 font-semibold">Rating</th>
+          {{end}}
+          <th class="text-center px-4 py-3 text-gray-600 font-semibold">Estado</th>
+          <th class="text-right px-4 py-3 text-gray-600 font-semibold">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {{range .Players}}
+          <tr class="hover:bg-gray-50 {{if not .Active}}opacity-50{{end}}">
+            <td class="px-4 py-3 font-medium text-gray-800">{{.Name}}</td>
+            <td class="px-4 py-3">
+              <span class="capitalize bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs">
+                {{.PrimaryPosition}}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-gray-400 text-xs">{{.Notes}}</td>
+            {{if $.IsAdmin}}
+              <td class="px-4 py-3 text-center" id="rating-{{.ID}}">
+                <span class="font-bold text-gray-700">{{.Rating}}</span>
+                <span class="text-gray-300">/10</span>
+              </td>
+            {{end}}
+            <td class="px-4 py-3 text-center">
+              {{if .Active}}
+                <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs">Activo</span>
+              {{else}}
+                <span class="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full text-xs">Inactivo</span>
+              {{end}}
+            </td>
+            <td class="px-4 py-3 text-right">
+              <div class="flex justify-end gap-2">
+                <a href="/admin/players/{{.ID}}/edit"
+                   class="text-xs bg-yellow-100 hover:bg-yellow-200 text-yellow-700 px-3 py-1 rounded-lg">
+                  Editar
+                </a>
+                {{if .Active}}
+                  <form action="/admin/players/{{.ID}}/deactivate" method="POST"
+                        hx-patch="/admin/players/{{.ID}}/deactivate" hx-target="closest tr" hx-swap="outerHTML">
+                    <button class="text-xs bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-lg">
+                      Desactivar
+                    </button>
+                  </form>
+                {{else}}
+                  <form action="/admin/players/{{.ID}}/activate" method="POST">
+                    <button class="text-xs bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded-lg">
+                      Activar
+                    </button>
+                  </form>
+                {{end}}
+              </div>
+            </td>
+          </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+</div>
+{{end}}
