@@ -12,6 +12,7 @@ const templatesDir = "internal/interface/templates"
 // funcMap contiene funciones auxiliares disponibles en todos los templates.
 var funcMap = template.FuncMap{
 	"add": func(a, b int) int { return a + b },
+	"sub": func(a, b int) int { return a - b },
 }
 
 // Renderer compila un set de templates por página, evitando el problema
@@ -86,9 +87,9 @@ func (r *Renderer) ExecuteTemplate(w io.Writer, name string, data any) error {
 	if strings.HasPrefix(name, "partials/") {
 		return t.ExecuteTemplate(w, name, data)
 	}
-	// Standalone: ejecutar directamente
+	// Standalone: ejecutar por nombre base del archivo
 	if name == "auth/login.html" || name == "matches/share.html" {
-		return t.Execute(w, data)
+		return t.ExecuteTemplate(w, strings.Split(name, "/")[1], data)
 	}
 	// Páginas con layout
 	return t.ExecuteTemplate(w, "layout.html", data)

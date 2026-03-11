@@ -80,11 +80,11 @@ func (h *MatchHandler) ShareView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.tmpl.ExecuteTemplate(w, "matches/share.html", map[string]any{
+	h.tmpl.ExecuteTemplate(w, "matches/share.html", withFlash(w, r, map[string]any{
 		"Match": m,
 		"Team1": m.Team1(),
 		"Team2": m.Team2(),
-	})
+	}))
 }
 
 // History muestra el historial de partidos.
@@ -96,7 +96,6 @@ func (h *MatchHandler) History(w http.ResponseWriter, r *http.Request) {
 	}
 	h.tmpl.ExecuteTemplate(w, "matches/history.html", withFlash(w, r, map[string]any{
 		"Matches": matches,
-		"IsAdmin": IsAdmin(r.Context()),
 	}))
 }
 

@@ -35,7 +35,7 @@ func (h *UserHandler) List(w http.ResponseWriter, r *http.Request) {
 
 // ShowCreate muestra el formulario de creación de usuario.
 func (h *UserHandler) ShowCreate(w http.ResponseWriter, r *http.Request) {
-	h.tmpl.ExecuteTemplate(w, "users/form.html", nil)
+	h.tmpl.ExecuteTemplate(w, "users/form.html", withFlash(w, r, map[string]any{}))
 }
 
 // Create crea un nuevo usuario.
@@ -48,9 +48,9 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := h.service.CreateUser(r.Context(), input); err != nil {
-		h.tmpl.ExecuteTemplate(w, "users/form.html", map[string]string{
+		h.tmpl.ExecuteTemplate(w, "users/form.html", withFlash(w, r, map[string]any{
 			"Error": err.Error(),
-		})
+		}))
 		return
 	}
 

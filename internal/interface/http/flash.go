@@ -7,11 +7,12 @@ import (
 
 const flashCookie = "flash"
 
-// withFlash inyecta el flash (si existe) en el mapa de datos del template.
+// withFlash inyecta el flash (si existe) e IsAdmin en el mapa de datos del template.
 func withFlash(w http.ResponseWriter, r *http.Request, data map[string]any) map[string]any {
 	kind, msg := getFlash(w, r)
 	data["Flash"] = msg
 	data["FlashKind"] = kind
+	data["IsAdmin"] = IsAdmin(r.Context())
 	return data
 }
 

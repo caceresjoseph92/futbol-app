@@ -87,37 +87,115 @@ func (m *Match) AddPlayer(p *player.Player) error {
 	return nil
 }
 
-// AssignTeams ejecuta el algoritmo de balanceo y asigna los jugadores a equipos.
+// AssignTeams ejecuta el algoritmo de balanceo automático y asigna los jugadores a equipos.
 // Requiere exactamente 12 jugadores previamente agregados.
 //
-// Algoritmo: greedy balancing por rating.
-// Ordena jugadores de mayor a menor rating y los distribuye alternando equipos,
-// asegurando que la diferencia de puntuación total sea mínima.
+// Formación objetivo por equipo:
+//   - Estándar (≥2 creadores disponibles): 3 defensas + 1 creador + 2 delanteros
+//   - Alternativa (<2 creadores):          3 defensas + 3 delanteros
+//
+// Los jugadores se agrupan por posición y se procesan en bloques
+// (defensas → creadores → delanteros). Dentro de cada bloque se usa greedy
+// de suma acumulada para repartir jugadores de rating similar entre equipos,
+// garantizando balance posicional y de nivel simultáneamente.
 func (m *Match) AssignTeams() error {
 	if len(m.Players) != RequiredPlayers {
 		return ErrInvalidPlayerCount
 	}
 
-	// Ordenar de mayor a menor rating (snapshot)
-	sorted := make([]MatchPlayer, len(m.Players))
-	copy(sorted, m.Players)
-	sort.Slice(sorted, func(i, j int) bool {
-		return sorted[i].RatingSnapshot > sorted[j].RatingSnapshot
-	})
+	byRating := func(p []MatchPlayer) {
+		sort.Slice(p, func(i, j int) bool { return p[i].RatingSnapshot > p[j].RatingSnapshot })
+	}
 
-	// Greedy: asignar al equipo con menor suma acumulada
-	var sum1, sum2 int8
-	for i := range sorted {
+	// Separar por posición primaria
+	var defensas, creadores, delanteros []MatchPlayer
+	for _, mp := range m.Players {
+		switch mp.PrimaryPosition {
+		case player.PositionDefensa:
+			defensas = append(defensas, mp)
+		case player.PositionCreador:
+			creadores = append(creadores, mp)
+		default:
+			delanteros = append(delanteros, mp)
+		}
+	}
+	byRating(defensas)
+	byRating(creadores)
+	byRating(delanteros)
+
+	// Si hay menos de 2 creadores, los tratamos como delanteros
+	if len(creadores) < 2 {
+		delanteros = append(delanteros, creadores...)
+		byRating(delanteros)
+		creadores = nil
+	}
+
+	// Cupos: 6 defensas | 0-2 creadores | resto delanteros
+	const defTarget = 6
+	creTarget := 2
+	if creadores == nil {
+		creTarget = 0
+	}
+
+	var overflow []MatchPlayer
+
+	// Llenar cupo de defensas (excedente va a pool delantero)
+	var defSlots []MatchPlayer
+	if len(defensas) >= defTarget {
+		defSlots = defensas[:defTarget]
+		overflow = append(overflow, defensas[defTarget:]...)
+	} else {
+		defSlots = defensas
+	}
+
+	// Llenar cupo de creadores (excedente va a pool delantero)
+	var creSlots []MatchPlayer
+	if len(creadores) >= creTarget {
+		creSlots = creadores[:creTarget]
+		overflow = append(overflow, creadores[creTarget:]...)
+	} else {
+		creSlots = creadores
+	}
+
+	// El resto del cupo lo cubren delanteros + overflow de otras posiciones
+	allFwd := append(delanteros, overflow...)
+	byRating(allFwd)
+	fwdTarget := 12 - len(defSlots) - len(creSlots)
+	var fwdSlots []MatchPlayer
+	if len(allFwd) >= fwdTarget {
+		fwdSlots = allFwd[:fwdTarget]
+	} else {
+		fwdSlots = allFwd
+	}
+
+	// Lista final: defensas → creadores → delanteros
+	ordered := make([]MatchPlayer, 0, 12)
+	ordered = append(ordered, defSlots...)
+	ordered = append(ordered, creSlots...)
+	ordered = append(ordered, fwdSlots...)
+
+	// Fallback por si el conteo no cierra exactamente
+	if len(ordered) != 12 {
+		ordered = make([]MatchPlayer, len(m.Players))
+		copy(ordered, m.Players)
+		byRating(ordered)
+	}
+
+	// Greedy de suma acumulada procesando bloque a bloque:
+	// al iterar defensas juntos, luego creadores, luego delanteros,
+	// ~la mitad de cada posición cae naturalmente en cada equipo.
+	var sum1, sum2 int32
+	for i := range ordered {
 		if sum1 <= sum2 {
-			sorted[i].Team = 1
-			sum1 += sorted[i].RatingSnapshot
+			ordered[i].Team = 1
+			sum1 += int32(ordered[i].RatingSnapshot)
 		} else {
-			sorted[i].Team = 2
-			sum2 += sorted[i].RatingSnapshot
+			ordered[i].Team = 2
+			sum2 += int32(ordered[i].RatingSnapshot)
 		}
 	}
 
-	m.Players = sorted
+	m.Players = ordered
 	return nil
 }
 

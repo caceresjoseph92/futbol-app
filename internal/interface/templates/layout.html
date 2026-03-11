@@ -23,12 +23,14 @@
         <a href="/stats" class="hover:underline">Estadísticas</a>
         {{if .IsAdmin}}
           <a href="/admin/players" class="hover:underline">Jugadores</a>
-          <a href="/admin/matches/new" class="bg-white text-green-700 px-3 py-1 rounded font-semibold hover:bg-green-50">+ Partido</a>
+          <a href="/admin/matches/new" class="bg-white text-green-700 px-3 py-1 rounded font-semibold hover:bg-green-50">+ Publicación</a>
           <a href="/admin/users" class="hover:underline">Usuarios</a>
+          <form action="/logout" method="POST" class="inline">
+            <button class="hover:underline text-green-200">Salir</button>
+          </form>
+        {{else}}
+          <a href="/login" class="bg-white text-green-700 px-3 py-1 rounded font-semibold hover:bg-green-50">Admin</a>
         {{end}}
-        <form action="/logout" method="POST" class="inline">
-          <button class="hover:underline text-green-200">Salir</button>
-        </form>
       </div>
     </div>
   </nav>

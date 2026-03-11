@@ -26,19 +26,18 @@ func NewRouter(
 	// Archivos estáticos
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
-	// Rutas públicas
+	// Rutas siempre públicas
 	r.Get("/login", authHandler.ShowLogin)
 	r.Post("/login", authHandler.Login)
 	r.Post("/logout", authHandler.Logout)
 
-	// Rutas autenticadas (admin y viewer)
+	// Rutas públicas — accesibles sin login, pero muestran opciones admin si hay sesión
 	r.Group(func(r chi.Router) {
-		r.Use(AuthMiddleware)
+		r.Use(OptionalAuthMiddleware)
 
-		// Vista pública del partido activo (sin ratings)
 		r.Get("/", matchHandler.ShowCurrent)
 		r.Get("/matches/{id}", matchHandler.ShowMatch)
-		r.Get("/matches/{id}/share", matchHandler.ShareView) // vista para copiar a WhatsApp
+		r.Get("/matches/{id}/share", matchHandler.ShareView)
 		r.Get("/history", matchHandler.History)
 		r.Get("/stats", statsHandler.Show)
 	})

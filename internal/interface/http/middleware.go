@@ -28,6 +28,7 @@ type Claims struct {
 
 // AuthMiddleware verifica el JWT en la cookie o header Authorization.
 // Si el token es válido, inyecta el usuario en el contexto.
+// Si no hay token o es inválido, redirige a /login.
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenStr := extractToken(r)
@@ -45,6 +46,24 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), contextKeyUser, claims.UserID)
 		ctx = context.WithValue(ctx, contextKeyRole, claims.Role)
 		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// OptionalAuthMiddleware intenta leer el JWT pero nunca redirige.
+// Si hay token válido, inyecta el usuario en el contexto (permite saber si es admin).
+// Si no hay token o es inválido, continúa sin usuario en el contexto.
+func OptionalAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		tokenStr := extractToken(r)
+		if tokenStr != "" {
+			if claims, err := parseToken(tokenStr); err == nil {
+				ctx := context.WithValue(r.Context(), contextKeyUser, claims.UserID)
+				ctx = context.WithValue(ctx, contextKeyRole, claims.Role)
+				next.ServeHTTP(w, r.WithContext(ctx))
+				return
+			}
+		}
+		next.ServeHTTP(w, r)
 	})
 }
 

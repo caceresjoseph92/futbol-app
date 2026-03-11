@@ -31,33 +31,32 @@ func (h *PlayerHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 	h.tmpl.ExecuteTemplate(w, "players/list.html", withFlash(w, r, map[string]any{
 		"Players": players,
-		"IsAdmin": IsAdmin(r.Context()),
 	}))
 }
 
 // ShowCreate muestra el formulario de creación.
 func (h *PlayerHandler) ShowCreate(w http.ResponseWriter, r *http.Request) {
-	h.tmpl.ExecuteTemplate(w, "players/form.html", map[string]any{
+	h.tmpl.ExecuteTemplate(w, "players/form.html", withFlash(w, r, map[string]any{
 		"Action": "create",
-	})
+	}))
 }
 
 // Create procesa la creación de un jugador.
 func (h *PlayerHandler) Create(w http.ResponseWriter, r *http.Request) {
 	input, err := parsePlayerForm(r)
 	if err != nil {
-		h.tmpl.ExecuteTemplate(w, "players/form.html", map[string]any{
+		h.tmpl.ExecuteTemplate(w, "players/form.html", withFlash(w, r, map[string]any{
 			"Error":  err.Error(),
 			"Action": "create",
-		})
+		}))
 		return
 	}
 
 	if _, err := h.service.CreatePlayer(r.Context(), input); err != nil {
-		h.tmpl.ExecuteTemplate(w, "players/form.html", map[string]any{
+		h.tmpl.ExecuteTemplate(w, "players/form.html", withFlash(w, r, map[string]any{
 			"Error":  err.Error(),
 			"Action": "create",
-		})
+		}))
 		return
 	}
 
@@ -83,11 +82,11 @@ func (h *PlayerHandler) ShowEdit(w http.ResponseWriter, r *http.Request) {
 	for _, pos := range p.CanPlayPositions {
 		canPlay[string(pos)] = true
 	}
-	h.tmpl.ExecuteTemplate(w, "players/form.html", map[string]any{
+	h.tmpl.ExecuteTemplate(w, "players/form.html", withFlash(w, r, map[string]any{
 		"Player":  p,
 		"Action":  "edit",
 		"CanPlay": canPlay,
-	})
+	}))
 }
 
 // Update procesa la actualización de un jugador.

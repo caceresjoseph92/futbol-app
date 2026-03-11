@@ -70,20 +70,11 @@ func (r *StatsRepository) GetSummary(ctx context.Context) (*stats.Summary, error
 	}, nil
 }
 
-// playerMatchResult es un resultado de partido para un jugador.
-type playerMatchResult struct {
-	playerID   uuid.UUID
-	playerName string
-	result     string // "win", "loss", "draw"
-	playedAt   string // para ordenar
-}
-
 func (r *StatsRepository) getPlayerStats(ctx context.Context) ([]stats.PlayerStat, error) {
 	rows, err := r.pool.Query(ctx, `
 		SELECT
 			mp.player_id,
 			mp.player_name,
-			m.played_at,
 			CASE
 				WHEN m.team1_score = m.team2_score THEN 'draw'
 				WHEN (mp.team = 1 AND m.team1_score > m.team2_score)
@@ -112,8 +103,8 @@ func (r *StatsRepository) getPlayerStats(ctx context.Context) ([]stats.PlayerSta
 
 	for rows.Next() {
 		var pid uuid.UUID
-		var name, playedAt, result string
-		if err := rows.Scan(&pid, &name, &playedAt, &result); err != nil {
+		var name, result string
+		if err := rows.Scan(&pid, &name, &result); err != nil {
 			return nil, err
 		}
 		if _, ok := byPlayer[pid]; !ok {
