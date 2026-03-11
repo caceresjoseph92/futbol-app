@@ -205,7 +205,11 @@ func (h *MatchHandler) GenerateTeams(w http.ResponseWriter, r *http.Request) {
 	}
 
 	setFlash(w, "success", "Equipos generados automáticamente")
-	http.Redirect(w, r, "/admin/matches/"+id.String()+"/edit", http.StatusSeeOther)
+	referer := r.Referer()
+	if referer == "" {
+		referer = "/admin/matches/" + id.String() + "/edit"
+	}
+	http.Redirect(w, r, referer, http.StatusSeeOther)
 }
 
 // TransferPlayer mueve un jugador al equipo contrario.

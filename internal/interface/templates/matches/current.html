@@ -18,17 +18,23 @@
         <h1 class="text-2xl font-bold text-gray-800">Partido de hoy</h1>
         <p class="text-gray-500 text-sm">{{.Match.PlayedAt.Format "02/01/2006"}}</p>
       </div>
-      <div class="flex gap-2">
+      <div class="flex gap-2 flex-wrap">
         {{if .IsAdmin}}
           <a href="/admin/matches/{{.Match.ID}}/edit"
              class="bg-yellow-500 hover:bg-yellow-600 text-white text-sm px-4 py-2 rounded-lg">
             Editar
           </a>
+          <form action="/admin/matches/{{.Match.ID}}/generate" method="POST" class="inline">
+            <button type="submit"
+              class="bg-purple-600 hover:bg-purple-700 text-white text-sm px-4 py-2 rounded-lg">
+              🔀 Re-generar
+            </button>
+          </form>
         {{end}}
-        <a href="/matches/{{.Match.ID}}/share"
-           class="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-lg">
-          Copiar para WhatsApp
-        </a>
+        <button onclick="copyMatchToClipboard()"
+          class="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-lg">
+          📋 Copiar para WhatsApp
+        </button>
       </div>
     </div>
 
@@ -103,6 +109,29 @@
       </div>
     {{end}}
 
+    <!-- Texto oculto para copiar al portapapeles -->
+    <div id="whatsapp-text" class="hidden">🔵 *Equipo 1*
+{{range .Match.Team1}}• {{.PlayerName}} — {{.PrimaryPosition}}{{if .Notes}} ({{.Notes}}){{end}}
+{{end}}
+🔴 *Equipo 2*
+{{range .Match.Team2}}• {{.PlayerName}} — {{.PrimaryPosition}}{{if .Notes}} ({{.Notes}}){{end}}
+{{end}}{{if .Match.GoalkeeperInfo}}🧤 *Arqueros:* {{.Match.GoalkeeperInfo}}{{end}}</div>
+
+    <div id="copy-feedback" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-green-700 text-white text-sm px-5 py-3 rounded-xl shadow-lg">
+      ¡Copiado! Pégalo en WhatsApp ✅
+    </div>
+
   {{end}}
 </div>
+
+<script>
+function copyMatchToClipboard() {
+  const text = document.getElementById("whatsapp-text").innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const fb = document.getElementById("copy-feedback");
+    fb.classList.remove("hidden");
+    setTimeout(() => fb.classList.add("hidden"), 3000);
+  });
+}
+</script>
 {{end}}
