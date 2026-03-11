@@ -71,10 +71,36 @@ func (r *StatsRepository) GetSummary(ctx context.Context) (*stats.Summary, error
 }
 
 func (r *StatsRepository) getPlayerStats(ctx context.Context) ([]stats.PlayerStat, error) {
+	// Paso 1: todos los jugadores activos (para que aparezcan incluso con 0 partidos)
+	type playerData struct {
+		name    string
+		results []string // ordenados de más reciente a más antiguo
+	}
+	byPlayer := map[uuid.UUID]*playerData{}
+	var order []uuid.UUID
+
+	pRows, err := r.pool.Query(ctx, `SELECT id, name FROM players WHERE active = true ORDER BY name`)
+	if err != nil {
+		return nil, err
+	}
+	defer pRows.Close()
+	for pRows.Next() {
+		var pid uuid.UUID
+		var name string
+		if err := pRows.Scan(&pid, &name); err != nil {
+			return nil, err
+		}
+		byPlayer[pid] = &playerData{name: name}
+		order = append(order, pid)
+	}
+	if err := pRows.Err(); err != nil {
+		return nil, err
+	}
+
+	// Paso 2: resultados de partidos terminados
 	rows, err := r.pool.Query(ctx, `
 		SELECT
 			mp.player_id,
-			mp.player_name,
 			CASE
 				WHEN m.team1_score = m.team2_score THEN 'draw'
 				WHEN (mp.team = 1 AND m.team1_score > m.team2_score)
@@ -93,25 +119,15 @@ func (r *StatsRepository) getPlayerStats(ctx context.Context) ([]stats.PlayerSta
 	}
 	defer rows.Close()
 
-	// Agrupar por jugador
-	type playerData struct {
-		name    string
-		results []string // ordenados de más reciente a más antiguo
-	}
-	byPlayer := map[uuid.UUID]*playerData{}
-	var order []uuid.UUID
-
 	for rows.Next() {
 		var pid uuid.UUID
-		var name, result string
-		if err := rows.Scan(&pid, &name, &result); err != nil {
+		var result string
+		if err := rows.Scan(&pid, &result); err != nil {
 			return nil, err
 		}
-		if _, ok := byPlayer[pid]; !ok {
-			byPlayer[pid] = &playerData{name: name}
-			order = append(order, pid)
+		if pd, ok := byPlayer[pid]; ok {
+			pd.results = append(pd.results, result)
 		}
-		byPlayer[pid].results = append(byPlayer[pid].results, result)
 	}
 
 	var out []stats.PlayerStat
