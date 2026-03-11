@@ -14,6 +14,7 @@ func NewRouter(
 	playerHandler *PlayerHandler,
 	matchHandler *MatchHandler,
 	userHandler *UserHandler,
+	statsHandler *StatsHandler,
 ) http.Handler {
 	r := chi.NewRouter()
 
@@ -39,6 +40,7 @@ func NewRouter(
 		r.Get("/matches/{id}", matchHandler.ShowMatch)
 		r.Get("/matches/{id}/share", matchHandler.ShareView) // vista para copiar a WhatsApp
 		r.Get("/history", matchHandler.History)
+		r.Get("/stats", statsHandler.Show)
 	})
 
 	// Rutas solo admin
@@ -52,6 +54,7 @@ func NewRouter(
 		r.Post("/admin/players", playerHandler.Create)
 		r.Get("/admin/players/{id}/edit", playerHandler.ShowEdit)
 		r.Put("/admin/players/{id}", playerHandler.Update)
+		r.Post("/admin/players/{id}", playerHandler.Update)
 		r.Patch("/admin/players/{id}/rating", playerHandler.UpdateRating)
 		r.Patch("/admin/players/{id}/deactivate", playerHandler.Deactivate)
 		r.Patch("/admin/players/{id}/activate", playerHandler.Activate)

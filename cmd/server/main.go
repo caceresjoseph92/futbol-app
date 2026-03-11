@@ -15,6 +15,7 @@ import (
 	infrapostgres "futbol-app/internal/infrastructure/postgres"
 	appplayer "futbol-app/internal/application/player"
 	appmatch "futbol-app/internal/application/match"
+	appstats "futbol-app/internal/application/stats"
 	appuser "futbol-app/internal/application/user"
 	httphandler "futbol-app/internal/interface/http"
 
@@ -40,11 +41,13 @@ func main() {
 	playerRepo := infrapostgres.NewPlayerRepository(pool)
 	matchRepo  := infrapostgres.NewMatchRepository(pool)
 	userRepo   := infrapostgres.NewUserRepository(pool)
+	statsRepo  := infrapostgres.NewStatsRepository(pool)
 
 	// ── Servicios de aplicación (casos de uso) ───────────────────────────────
 	playerService := appplayer.NewService(playerRepo)
 	matchService  := appmatch.NewService(matchRepo, playerRepo)
 	userService   := appuser.NewService(userRepo)
+	statsService  := appstats.NewService(statsRepo)
 
 	// ── Templates HTML ───────────────────────────────────────────────────────
 	renderer, err := httphandler.NewRenderer()
@@ -57,9 +60,10 @@ func main() {
 	playerHandler := httphandler.NewPlayerHandler(playerService, renderer)
 	matchHandler  := httphandler.NewMatchHandler(matchService, playerService, renderer)
 	userHandler   := httphandler.NewUserHandler(userService, renderer)
+	statsHandler  := httphandler.NewStatsHandler(statsService, renderer)
 
 	// ── Router ───────────────────────────────────────────────────────────────
-	router := httphandler.NewRouter(authHandler, playerHandler, matchHandler, userHandler)
+	router := httphandler.NewRouter(authHandler, playerHandler, matchHandler, userHandler, statsHandler)
 
 	// ── Servidor ─────────────────────────────────────────────────────────────
 	port := os.Getenv("PORT")

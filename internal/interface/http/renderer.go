@@ -9,6 +9,11 @@ import (
 
 const templatesDir = "internal/interface/templates"
 
+// funcMap contiene funciones auxiliares disponibles en todos los templates.
+var funcMap = template.FuncMap{
+	"add": func(a, b int) int { return a + b },
+}
+
 // Renderer compila un set de templates por página, evitando el problema
 // de múltiples {{define "content"}} sobreescribiéndose en un set global.
 type Renderer struct {
@@ -32,9 +37,10 @@ func NewRenderer() (*Renderer, error) {
 		"players/form.html",
 		"users/list.html",
 		"users/form.html",
+		"stats/index.html",
 	}
 	for _, page := range pages {
-		t, err := template.ParseFiles(layout, teams, templatesDir+"/"+page)
+		t, err := template.New("").Funcs(funcMap).ParseFiles(layout, teams, templatesDir+"/"+page)
 		if err != nil {
 			return nil, fmt.Errorf("error cargando %s: %w", page, err)
 		}
@@ -47,7 +53,7 @@ func NewRenderer() (*Renderer, error) {
 		"matches/share.html",
 	}
 	for _, s := range standalones {
-		t, err := template.ParseFiles(templatesDir + "/" + s)
+		t, err := template.New("").Funcs(funcMap).ParseFiles(templatesDir + "/" + s)
 		if err != nil {
 			return nil, fmt.Errorf("error cargando %s: %w", s, err)
 		}
@@ -60,7 +66,7 @@ func NewRenderer() (*Renderer, error) {
 		"partials/player_rating.html",
 	}
 	for _, p := range partials {
-		t, err := template.ParseFiles(templatesDir + "/" + p)
+		t, err := template.New("").Funcs(funcMap).ParseFiles(templatesDir + "/" + p)
 		if err != nil {
 			return nil, fmt.Errorf("error cargando %s: %w", p, err)
 		}
