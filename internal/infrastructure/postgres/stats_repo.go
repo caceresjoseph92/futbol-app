@@ -51,10 +51,10 @@ func (r *StatsRepository) GetSummary(ctx context.Context) (*stats.Summary, error
 		return winners[i].WinPct > winners[j].WinPct
 	})
 
-	// Streaks: solo jugadores con racha >= 2 o <= -2
+	// Streaks: jugadores con cualquier racha activa (!= 0)
 	var streaks []stats.PlayerStat
 	for _, ps := range playerStats {
-		if ps.Streak >= 2 || ps.Streak <= -2 {
+		if ps.Streak != 0 {
 			streaks = append(streaks, ps)
 		}
 	}
