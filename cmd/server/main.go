@@ -8,7 +8,6 @@ package main
 
 import (
 	"context"
-	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -48,16 +47,16 @@ func main() {
 	userService   := appuser.NewService(userRepo)
 
 	// ── Templates HTML ───────────────────────────────────────────────────────
-	tmpl, err := template.ParseGlob("internal/interface/templates/**/*.html")
+	renderer, err := httphandler.NewRenderer()
 	if err != nil {
 		log.Fatalf("Error cargando templates: %v", err)
 	}
 
 	// ── Handlers HTTP ────────────────────────────────────────────────────────
-	authHandler   := httphandler.NewAuthHandler(userService, tmpl)
-	playerHandler := httphandler.NewPlayerHandler(playerService, tmpl)
-	matchHandler  := httphandler.NewMatchHandler(matchService, playerService, tmpl)
-	userHandler   := httphandler.NewUserHandler(userService, tmpl)
+	authHandler   := httphandler.NewAuthHandler(userService, renderer)
+	playerHandler := httphandler.NewPlayerHandler(playerService, renderer)
+	matchHandler  := httphandler.NewMatchHandler(matchService, playerService, renderer)
+	userHandler   := httphandler.NewUserHandler(userService, renderer)
 
 	// ── Router ───────────────────────────────────────────────────────────────
 	router := httphandler.NewRouter(authHandler, playerHandler, matchHandler, userHandler)

@@ -1,7 +1,6 @@
 package http
 
 import (
-	"html/template"
 	"net/http"
 	"strconv"
 	"time"
@@ -17,11 +16,11 @@ import (
 type MatchHandler struct {
 	matchService  *appmatch.Service
 	playerService *appplayer.Service
-	tmpl          *template.Template
+	tmpl          *Renderer
 }
 
 // NewMatchHandler crea el handler de partidos.
-func NewMatchHandler(ms *appmatch.Service, ps *appplayer.Service, tmpl *template.Template) *MatchHandler {
+func NewMatchHandler(ms *appmatch.Service, ps *appplayer.Service, tmpl *Renderer) *MatchHandler {
 	return &MatchHandler{matchService: ms, playerService: ps, tmpl: tmpl}
 }
 

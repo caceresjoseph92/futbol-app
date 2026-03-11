@@ -1,7 +1,6 @@
 package http
 
 import (
-	"html/template"
 	"net/http"
 
 	appuser "futbol-app/internal/application/user"
@@ -14,11 +13,11 @@ import (
 // UserHandler maneja la gestión de usuarios (solo admin).
 type UserHandler struct {
 	service *appuser.Service
-	tmpl    *template.Template
+	tmpl    *Renderer
 }
 
 // NewUserHandler crea el handler de usuarios.
-func NewUserHandler(service *appuser.Service, tmpl *template.Template) *UserHandler {
+func NewUserHandler(service *appuser.Service, tmpl *Renderer) *UserHandler {
 	return &UserHandler{service: service, tmpl: tmpl}
 }
 

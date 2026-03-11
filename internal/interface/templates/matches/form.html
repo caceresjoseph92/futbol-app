@@ -1,0 +1,27 @@
+{{define "content"}}
+<div class="max-w-lg mx-auto">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">Nuevo partido</h1>
+    <a href="/" class="text-sm text-gray-400 hover:underline">← Volver</a>
+  </div>
+
+  <form action="/admin/matches" method="POST"
+        class="bg-white rounded-2xl shadow-sm border p-6 space-y-5">
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Fecha del partido *</label>
+      <input type="date" name="played_at" required
+        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none" />
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Arqueros</label>
+      <input type="text" name="goalkeeper_info"
+        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
+        placeholder="Ej: Futguardian 1 y Futguardian 2" />
+    </div>
+    <button type="submit"
+      class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg text-sm transition">
+      Crear partido
+    </button>
+  </form>
+</div>
+{{end}}

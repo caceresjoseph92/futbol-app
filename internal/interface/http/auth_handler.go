@@ -1,7 +1,6 @@
 package http
 
 import (
-	"html/template"
 	"net/http"
 	"os"
 	"time"
@@ -15,11 +14,11 @@ import (
 // AuthHandler maneja autenticación (login/logout).
 type AuthHandler struct {
 	userService *appuser.Service
-	tmpl        *template.Template
+	tmpl        *Renderer
 }
 
 // NewAuthHandler crea el handler de autenticación.
-func NewAuthHandler(userService *appuser.Service, tmpl *template.Template) *AuthHandler {
+func NewAuthHandler(userService *appuser.Service, tmpl *Renderer) *AuthHandler {
 	return &AuthHandler{userService: userService, tmpl: tmpl}
 }
 

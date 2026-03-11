@@ -1,7 +1,6 @@
 package http
 
 import (
-	"html/template"
 	"net/http"
 	"strconv"
 
@@ -15,11 +14,11 @@ import (
 // PlayerHandler maneja las rutas de jugadores.
 type PlayerHandler struct {
 	service *appplayer.Service
-	tmpl    *template.Template
+	tmpl    *Renderer
 }
 
 // NewPlayerHandler crea el handler de jugadores.
-func NewPlayerHandler(service *appplayer.Service, tmpl *template.Template) *PlayerHandler {
+func NewPlayerHandler(service *appplayer.Service, tmpl *Renderer) *PlayerHandler {
 	return &PlayerHandler{service: service, tmpl: tmpl}
 }
 
