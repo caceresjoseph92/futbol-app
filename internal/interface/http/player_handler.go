@@ -29,10 +29,10 @@ func (h *PlayerHandler) List(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error cargando jugadores", http.StatusInternalServerError)
 		return
 	}
-	h.tmpl.ExecuteTemplate(w, "players/list.html", map[string]any{
+	h.tmpl.ExecuteTemplate(w, "players/list.html", withFlash(w, r, map[string]any{
 		"Players": players,
 		"IsAdmin": IsAdmin(r.Context()),
-	})
+	}))
 }
 
 // ShowCreate muestra el formulario de creación.
@@ -61,6 +61,7 @@ func (h *PlayerHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	setFlash(w, "success", "Jugador creado correctamente")
 	http.Redirect(w, r, "/admin/players", http.StatusSeeOther)
 }
 
@@ -114,6 +115,7 @@ func (h *PlayerHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	setFlash(w, "success", "Jugador actualizado correctamente")
 	http.Redirect(w, r, "/admin/players", http.StatusSeeOther)
 }
 
@@ -153,6 +155,7 @@ func (h *PlayerHandler) Deactivate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	setFlash(w, "success", "Jugador desactivado")
 	http.Redirect(w, r, "/admin/players", http.StatusSeeOther)
 }
 
@@ -167,6 +170,7 @@ func (h *PlayerHandler) Activate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	setFlash(w, "success", "Jugador activado")
 	http.Redirect(w, r, "/admin/players", http.StatusSeeOther)
 }
 

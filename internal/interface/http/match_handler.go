@@ -40,10 +40,10 @@ func (h *MatchHandler) ShowCurrent(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	h.tmpl.ExecuteTemplate(w, "matches/current.html", map[string]any{
+	h.tmpl.ExecuteTemplate(w, "matches/current.html", withFlash(w, r, map[string]any{
 		"Match":   current,
 		"IsAdmin": IsAdmin(r.Context()),
-	})
+	}))
 }
 
 // ShowMatch muestra un partido específico.
@@ -60,10 +60,10 @@ func (h *MatchHandler) ShowMatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.tmpl.ExecuteTemplate(w, "matches/detail.html", map[string]any{
+	h.tmpl.ExecuteTemplate(w, "matches/detail.html", withFlash(w, r, map[string]any{
 		"Match":   m,
 		"IsAdmin": IsAdmin(r.Context()),
-	})
+	}))
 }
 
 // ShareView muestra la vista limpia para copiar a WhatsApp (sin ratings).
@@ -81,9 +81,9 @@ func (h *MatchHandler) ShareView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.tmpl.ExecuteTemplate(w, "matches/share.html", map[string]any{
-		"Match":  m,
-		"Team1":  m.Team1(),
-		"Team2":  m.Team2(),
+		"Match": m,
+		"Team1": m.Team1(),
+		"Team2": m.Team2(),
 	})
 }
 
@@ -94,10 +94,10 @@ func (h *MatchHandler) History(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error", http.StatusInternalServerError)
 		return
 	}
-	h.tmpl.ExecuteTemplate(w, "matches/history.html", map[string]any{
+	h.tmpl.ExecuteTemplate(w, "matches/history.html", withFlash(w, r, map[string]any{
 		"Matches": matches,
 		"IsAdmin": IsAdmin(r.Context()),
-	})
+	}))
 }
 
 // ShowCreate muestra el formulario para crear un partido.
@@ -107,9 +107,9 @@ func (h *MatchHandler) ShowCreate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error", http.StatusInternalServerError)
 		return
 	}
-	h.tmpl.ExecuteTemplate(w, "matches/form.html", map[string]any{
+	h.tmpl.ExecuteTemplate(w, "matches/form.html", withFlash(w, r, map[string]any{
 		"Players": players,
-	})
+	}))
 }
 
 // Create crea un nuevo partido en estado draft.
@@ -133,6 +133,7 @@ func (h *MatchHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	setFlash(w, "success", "Partido creado correctamente")
 	http.Redirect(w, r, "/admin/matches/"+m.ID.String()+"/edit", http.StatusSeeOther)
 }
 
@@ -156,12 +157,12 @@ func (h *MatchHandler) ShowEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.tmpl.ExecuteTemplate(w, "matches/edit.html", map[string]any{
+	h.tmpl.ExecuteTemplate(w, "matches/edit.html", withFlash(w, r, map[string]any{
 		"Match":   m,
 		"Players": players,
 		"Team1":   m.Team1(),
 		"Team2":   m.Team2(),
-	})
+	}))
 }
 
 // AddPlayers agrega los 12 jugadores convocados al partido.
@@ -187,6 +188,7 @@ func (h *MatchHandler) AddPlayers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	setFlash(w, "success", "Convocados guardados")
 	http.Redirect(w, r, "/admin/matches/"+id.String()+"/edit", http.StatusSeeOther)
 }
 
@@ -203,6 +205,7 @@ func (h *MatchHandler) GenerateTeams(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	setFlash(w, "success", "Equipos generados automáticamente")
 	http.Redirect(w, r, "/admin/matches/"+id.String()+"/edit", http.StatusSeeOther)
 }
 
@@ -251,6 +254,7 @@ func (h *MatchHandler) Publish(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	setFlash(w, "success", "Equipos publicados")
 	http.Redirect(w, r, "/matches/"+id.String(), http.StatusSeeOther)
 }
 
@@ -267,6 +271,7 @@ func (h *MatchHandler) UpdateDate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	setFlash(w, "success", "Fecha y arqueros actualizados")
 	http.Redirect(w, r, "/admin/matches/"+id.String()+"/edit", http.StatusSeeOther)
 }
 
@@ -280,5 +285,6 @@ func (h *MatchHandler) Finish(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	setFlash(w, "success", "Resultado registrado")
 	http.Redirect(w, r, "/matches/"+id.String(), http.StatusSeeOther)
 }

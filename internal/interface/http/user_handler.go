@@ -28,9 +28,9 @@ func (h *UserHandler) List(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error", http.StatusInternalServerError)
 		return
 	}
-	h.tmpl.ExecuteTemplate(w, "users/list.html", map[string]any{
+	h.tmpl.ExecuteTemplate(w, "users/list.html", withFlash(w, r, map[string]any{
 		"Users": users,
-	})
+	}))
 }
 
 // ShowCreate muestra el formulario de creación de usuario.
@@ -54,6 +54,7 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	setFlash(w, "success", "Usuario creado correctamente")
 	http.Redirect(w, r, "/admin/users", http.StatusSeeOther)
 }
 

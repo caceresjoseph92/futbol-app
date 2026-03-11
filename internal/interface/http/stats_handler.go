@@ -24,8 +24,8 @@ func (h *StatsHandler) Show(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error cargando estadísticas", http.StatusInternalServerError)
 		return
 	}
-	h.tmpl.ExecuteTemplate(w, "stats/index.html", map[string]any{
+	h.tmpl.ExecuteTemplate(w, "stats/index.html", withFlash(w, r, map[string]any{
 		"Summary": summary,
 		"IsAdmin": IsAdmin(r.Context()),
-	})
+	}))
 }
