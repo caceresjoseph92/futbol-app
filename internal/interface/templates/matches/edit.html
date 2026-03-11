@@ -34,9 +34,10 @@
     <form action="/admin/matches/{{.Match.ID}}/players" method="POST">
       <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
         {{range .Players}}
+          {{$pid := .ID}}
           <label class="flex items-center gap-2 bg-gray-50 border rounded-lg px-3 py-2 cursor-pointer hover:bg-green-50">
             <input type="checkbox" name="player_ids" value="{{.ID}}"
-              {{range $.Match.Players}}{{if eq .PlayerID $.ID}}checked{{end}}{{end}}
+              {{range $.Match.Players}}{{if eq .PlayerID $pid}}checked{{end}}{{end}}
               class="accent-green-600"
             />
             <div>
