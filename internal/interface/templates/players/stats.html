@@ -25,6 +25,25 @@
     </div>
   </div>
 
+  <!-- Logros / Badges -->
+  {{if .History.Badges}}
+  <div>
+    <h2 class="text-lg font-semibold text-gray-700 mb-3">Logros</h2>
+    <div class="flex flex-wrap gap-3">
+      {{range .History.Badges}}
+        <div class="flex items-center gap-2 bg-white border rounded-2xl shadow-sm px-4 py-3 hover:shadow-md transition"
+             title="{{.Description}}">
+          <span class="text-2xl">{{.Icon}}</span>
+          <div>
+            <p class="text-sm font-semibold text-gray-800">{{.Name}}</p>
+            <p class="text-xs text-gray-400">{{.Description}}</p>
+          </div>
+        </div>
+      {{end}}
+    </div>
+  </div>
+  {{end}}
+
   <!-- Historial de partidos -->
   {{if not .History.Matches}}
     <div class="text-center py-16 text-gray-400">

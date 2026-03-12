@@ -397,5 +397,7 @@ func (r *StatsRepository) GetPlayerHistory(ctx context.Context, playerID uuid.UU
 	if total > 0 {
 		h.WinPct = math.Round(float64(h.Wins)/float64(total)*1000) / 10
 	}
+	// Los badges se calculan en el dominio — lógica pura, sin DB
+	h.Badges = stats.ComputeBadges(h)
 	return h, nil
 }
