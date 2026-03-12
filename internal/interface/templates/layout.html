@@ -59,5 +59,21 @@
   <footer class="text-center text-gray-400 text-xs py-6">
     Futbol App &copy; 2025
   </footer>
+
+  <!-- SSE: escuchar actualizaciones del servidor en tiempo real -->
+  <script>
+    (function() {
+      var es = new EventSource('/events');
+      es.addEventListener('match_updated', function() {
+        // Solo recargar si estamos en la página principal del partido
+        if (window.location.pathname === '/' || window.location.pathname.match(/^\/matches\/[^/]+$/)) {
+          window.location.reload();
+        }
+      });
+      es.onerror = function() {
+        // Reconectar automáticamente (el navegador lo hace solo con SSE)
+      };
+    })();
+  </script>
 </body>
 </html>

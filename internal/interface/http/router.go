@@ -15,16 +15,20 @@ func NewRouter(
 	matchHandler *MatchHandler,
 	userHandler *UserHandler,
 	statsHandler *StatsHandler,
+	sseHub *SSEHub,
 ) http.Handler {
 	r := chi.NewRouter()
 
 	// Middlewares globales
-	r.Use(middleware.Logger)
+	r.Use(LoggingMiddleware)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.CleanPath)
 
 	// Archivos estáticos
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+
+	// Endpoint SSE — clientes se suscriben aquí para recibir eventos en tiempo real
+	r.Get("/events", sseHub.ServeSSE)
 
 	// Rutas siempre públicas
 	r.Get("/login", authHandler.ShowLogin)

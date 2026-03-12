@@ -1,6 +1,7 @@
 package match_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -286,3 +287,163 @@ func TestFinish_ZeroScore(t *testing.T) {
 		t.Errorf("empate 0-0 debe ser válido, got: %v", err)
 	}
 }
+
+// =============================================================================
+// NUEVOS TESTS: Table-driven, distribución posicional, aleatorización
+// =============================================================================
+
+// --- Table-driven tests ------------------------------------------------------
+// En lugar de un test por caso, definimos una tabla (slice de structs)
+// con todos los escenarios. Go ejecuta cada fila como un sub-test con t.Run().
+// Es el estándar en la comunidad Go — más legible y fácil de extender.
+
+func TestFinish_TableDriven(t *testing.T) {
+	cases := []struct {
+		name    string
+		score1  int
+		score2  int
+		wantErr error
+	}{
+		{"victoria equipo1",   3, 1, nil},
+		{"victoria equipo2",   0, 2, nil},
+		{"empate",             1, 1, nil},
+		{"marcador negativo1", -1, 2, match.ErrInvalidScore},
+		{"marcador negativo2", 2, -1, match.ErrInvalidScore},
+		{"ambos negativos",    -1, -1, match.ErrInvalidScore},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			m := newMatch()
+			err := m.Finish(tc.score1, tc.score2)
+			if err != tc.wantErr {
+				t.Errorf("Finish(%d, %d) = %v, quería %v", tc.score1, tc.score2, err, tc.wantErr)
+			}
+		})
+	}
+}
+
+// --- Distribución posicional -------------------------------------------------
+// Verificamos que el algoritmo respeta la formación:
+// con ≥2 creadores → cada equipo recibe ~1 creador
+// con <2 creadores → los creadores pasan al pool de delanteros
+
+func TestAssignTeams_PositionDistribution(t *testing.T) {
+	m := newMatch()
+	add12Players(m) // 6D + 2C + 4Del
+	m.AssignTeams()
+
+	defTeam1, defTeam2 := 0, 0
+	for _, mp := range m.Players {
+		if mp.PrimaryPosition == player.PositionDefensa {
+			if mp.Team == 1 {
+				defTeam1++
+			} else {
+				defTeam2++
+			}
+		}
+	}
+	// Cada equipo debe tener ~3 defensas (±1 por overflow)
+	if defTeam1 < 2 || defTeam1 > 4 {
+		t.Errorf("equipo 1 tiene %d defensas, esperaba ~3", defTeam1)
+	}
+	if defTeam2 < 2 || defTeam2 > 4 {
+		t.Errorf("equipo 2 tiene %d defensas, esperaba ~3", defTeam2)
+	}
+}
+
+func TestAssignTeams_FormacionSinCreadores(t *testing.T) {
+	// Con <2 creadores, se tratan como delanteros → formación 3D-3F
+	m := newMatch()
+	jugadores := []*player.Player{
+		newPlayer("D1", player.PositionDefensa,   8),
+		newPlayer("D2", player.PositionDefensa,   8),
+		newPlayer("D3", player.PositionDefensa,   7),
+		newPlayer("D4", player.PositionDefensa,   7),
+		newPlayer("D5", player.PositionDefensa,   7),
+		newPlayer("D6", player.PositionDefensa,   6),
+		newPlayer("C1", player.PositionCreador,   9), // solo 1 → pasa a delantero
+		newPlayer("F1", player.PositionDelantero, 9),
+		newPlayer("F2", player.PositionDelantero, 8),
+		newPlayer("F3", player.PositionDelantero, 8),
+		newPlayer("F4", player.PositionDelantero, 7),
+		newPlayer("F5", player.PositionDelantero, 6),
+	}
+	for _, p := range jugadores {
+		m.AddPlayer(p)
+	}
+
+	err := m.AssignTeams()
+	if err != nil {
+		t.Fatalf("AssignTeams falló: %v", err)
+	}
+	if len(m.Team1()) != 6 || len(m.Team2()) != 6 {
+		t.Errorf("formación sin creadores debe producir 6v6")
+	}
+}
+
+// --- Aleatorización ----------------------------------------------------------
+// Ejecutamos AssignTeams 20 veces con jugadores de rating igual.
+// Con shuffle aleatorio, en 20 intentos deben aparecer al menos 2 distribuciones distintas.
+
+func TestAssignTeams_Randomizacion(t *testing.T) {
+	seen := map[string]bool{}
+
+	for i := 0; i < 20; i++ {
+		m := newMatch()
+		jugadores := []*player.Player{
+			newPlayer("A", player.PositionDefensa,   8),
+			newPlayer("B", player.PositionDefensa,   8),
+			newPlayer("C", player.PositionDefensa,   8),
+			newPlayer("D", player.PositionDefensa,   8),
+			newPlayer("E", player.PositionDefensa,   8),
+			newPlayer("F", player.PositionDefensa,   8),
+			newPlayer("G", player.PositionDelantero, 8),
+			newPlayer("H", player.PositionDelantero, 8),
+			newPlayer("I", player.PositionDelantero, 8),
+			newPlayer("J", player.PositionDelantero, 8),
+			newPlayer("K", player.PositionDelantero, 8),
+			newPlayer("L", player.PositionDelantero, 8),
+		}
+		for _, p := range jugadores {
+			m.AddPlayer(p)
+		}
+		m.AssignTeams()
+
+		// "firma" del equipo 1: nombres en orden
+		firma := ""
+		for _, mp := range m.Team1() {
+			firma += mp.PlayerName
+		}
+		seen[firma] = true
+	}
+
+	if len(seen) < 2 {
+		t.Errorf("AssignTeams no produce variedad en 20 ejecuciones (solo %d distribución distinta)", len(seen))
+	}
+}
+
+// --- Balance de ratings ------------------------------------------------------
+// Corremos el algoritmo muchas veces con jugadores variados y verificamos que
+// la diferencia de ratings NUNCA supera un umbral razonable.
+
+func TestAssignTeams_BalanceConsistente(t *testing.T) {
+	for i := 0; i < 50; i++ {
+		m := newMatch()
+		add12Players(m)
+		m.AssignTeams()
+
+		diff := m.Team1Rating() - m.Team2Rating()
+		if diff < 0 {
+			diff = -diff
+		}
+		if diff > 6 {
+			t.Errorf("iteración %d: diferencia de ratings muy alta: %d (E1=%d, E2=%d)",
+				i, diff, m.Team1Rating(), m.Team2Rating())
+		}
+	}
+}
+
+// Silenciar el "imported and not used" de uuid si no se usa en nuevos tests
+var _ = uuid.UUID{}
+var _ = fmt.Sprintf

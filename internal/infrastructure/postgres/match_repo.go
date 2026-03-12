@@ -139,6 +139,42 @@ func (r *MatchRepository) Update(ctx context.Context, m *match.Match) error {
 	return tx.Commit(ctx)
 }
 
+
+// FindPaginated retorna una página de partidos y el total de partidos.
+// offset = (page-1)*limit, limit = partidos por página.
+func (r *MatchRepository) FindPaginated(ctx context.Context, offset, limit int) ([]*match.Match, int, error) {
+	// Total de partidos
+	var total int
+	err := r.pool.QueryRow(ctx, "SELECT COUNT(*) FROM matches").Scan(&total)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	rows, err := r.pool.Query(ctx, `
+		SELECT id, played_at, status, team1_score, team2_score, goalkeeper_info, created_by, created_at
+		FROM matches ORDER BY played_at DESC LIMIT $1 OFFSET $2
+	`, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var matches []*match.Match
+	for rows.Next() {
+		m, err := scanMatch(rows)
+		if err != nil {
+			return nil, 0, err
+		}
+		players, err := r.findMatchPlayers(ctx, m.ID)
+		if err != nil {
+			return nil, 0, err
+		}
+		m.Players = players
+		matches = append(matches, m)
+	}
+	return matches, total, rows.Err()
+}
+
 func (r *MatchRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	_, err := r.pool.Exec(ctx, "DELETE FROM matches WHERE id = $1", id)
 	return err

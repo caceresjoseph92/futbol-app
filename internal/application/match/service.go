@@ -170,3 +170,36 @@ func (s *Service) UpdateMatchDate(ctx context.Context, matchID uuid.UUID, played
 	}
 	return m, nil
 }
+
+// PageResult contiene una página de partidos y la info de paginación.
+type PageResult struct {
+	Matches     []*match.Match
+	Total       int
+	Page        int
+	PerPage     int
+	TotalPages  int
+	HasPrev     bool
+	HasNext     bool
+}
+
+// ListMatchesPaginated retorna una página de partidos con metadatos de paginación.
+func (s *Service) ListMatchesPaginated(ctx context.Context, page, perPage int) (*PageResult, error) {
+	if page < 1 {
+		page = 1
+	}
+	offset := (page - 1) * perPage
+	matches, total, err := s.matchRepo.FindPaginated(ctx, offset, perPage)
+	if err != nil {
+		return nil, err
+	}
+	totalPages := (total + perPage - 1) / perPage
+	return &PageResult{
+		Matches:    matches,
+		Total:      total,
+		Page:       page,
+		PerPage:    perPage,
+		TotalPages: totalPages,
+		HasPrev:    page > 1,
+		HasNext:    page < totalPages,
+	}, nil
+}

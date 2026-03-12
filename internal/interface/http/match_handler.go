@@ -12,16 +12,23 @@ import (
 	"github.com/google/uuid"
 )
 
+// CacheInvalidator permite al handler invalidar cachés sin depender del paquete cache.
+type CacheInvalidator interface {
+	Invalidate()
+}
+
 // MatchHandler maneja las rutas de partidos.
 type MatchHandler struct {
 	matchService  *appmatch.Service
 	playerService *appplayer.Service
 	tmpl          *Renderer
+	sseHub        *SSEHub
+	statsCache    CacheInvalidator
 }
 
 // NewMatchHandler crea el handler de partidos.
-func NewMatchHandler(ms *appmatch.Service, ps *appplayer.Service, tmpl *Renderer) *MatchHandler {
-	return &MatchHandler{matchService: ms, playerService: ps, tmpl: tmpl}
+func NewMatchHandler(ms *appmatch.Service, ps *appplayer.Service, tmpl *Renderer, hub *SSEHub, statsCache CacheInvalidator) *MatchHandler {
+	return &MatchHandler{matchService: ms, playerService: ps, tmpl: tmpl, sseHub: hub, statsCache: statsCache}
 }
 
 // ShowCurrent muestra el partido activo (publicado más reciente).
@@ -87,15 +94,26 @@ func (h *MatchHandler) ShareView(w http.ResponseWriter, r *http.Request) {
 	}))
 }
 
-// History muestra el historial de partidos.
+// History muestra el historial de partidos paginado.
 func (h *MatchHandler) History(w http.ResponseWriter, r *http.Request) {
-	matches, err := h.matchService.ListMatches(r.Context())
+	page := 1
+	if p := r.URL.Query().Get("page"); p != "" {
+		if n, err := strconv.Atoi(p); err == nil && n > 0 {
+			page = n
+		}
+	}
+
+	result, err := h.matchService.ListMatchesPaginated(r.Context(), page, 10)
 	if err != nil {
 		http.Error(w, "Error", http.StatusInternalServerError)
 		return
 	}
 	h.tmpl.ExecuteTemplate(w, "matches/history.html", withFlash(w, r, map[string]any{
-		"Matches": matches,
+		"Matches":    result.Matches,
+		"Page":       result.Page,
+		"TotalPages": result.TotalPages,
+		"HasPrev":    result.HasPrev,
+		"HasNext":    result.HasNext,
 	}))
 }
 
@@ -204,6 +222,7 @@ func (h *MatchHandler) GenerateTeams(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.sseHub.Broadcast("teams_generated")
 	setFlash(w, "success", "Equipos generados automáticamente")
 	referer := r.Referer()
 	if referer == "" {
@@ -257,6 +276,7 @@ func (h *MatchHandler) Publish(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	h.sseHub.Broadcast("match_published")
 	setFlash(w, "success", "Equipos publicados")
 	http.Redirect(w, r, "/matches/"+id.String(), http.StatusSeeOther)
 }
@@ -288,6 +308,8 @@ func (h *MatchHandler) Finish(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	// Invalidar el caché de estadísticas — el resultado cambió los datos
+	h.statsCache.Invalidate()
 	setFlash(w, "success", "Resultado registrado")
 	http.Redirect(w, r, "/matches/"+id.String(), http.StatusSeeOther)
 }
