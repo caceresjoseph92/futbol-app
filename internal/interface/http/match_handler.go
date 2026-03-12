@@ -298,6 +298,21 @@ func (h *MatchHandler) UpdateDate(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/admin/matches/"+id.String()+"/edit", http.StatusSeeOther)
 }
 
+// CorrectScore corrige el marcador de un partido ya terminado.
+func (h *MatchHandler) CorrectScore(w http.ResponseWriter, r *http.Request) {
+	id, _ := uuid.Parse(chi.URLParam(r, "id"))
+	score1, _ := strconv.Atoi(r.FormValue("score1"))
+	score2, _ := strconv.Atoi(r.FormValue("score2"))
+
+	if _, err := h.matchService.CorrectScore(r.Context(), id, score1, score2); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	h.statsCache.Invalidate()
+	setFlash(w, "success", "Resultado corregido")
+	http.Redirect(w, r, "/history", http.StatusSeeOther)
+}
+
 // Finish registra el resultado del partido.
 func (h *MatchHandler) Finish(w http.ResponseWriter, r *http.Request) {
 	id, _ := uuid.Parse(chi.URLParam(r, "id"))

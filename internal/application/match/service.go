@@ -157,6 +157,21 @@ func (s *Service) FinishMatch(ctx context.Context, matchID uuid.UUID, score1, sc
 	return m, nil
 }
 
+// CorrectScore corrige el marcador de un partido ya terminado.
+func (s *Service) CorrectScore(ctx context.Context, matchID uuid.UUID, score1, score2 int) (*match.Match, error) {
+	m, err := s.matchRepo.FindByID(ctx, matchID)
+	if err != nil {
+		return nil, err
+	}
+	if err := m.CorrectScore(score1, score2); err != nil {
+		return nil, err
+	}
+	if err := s.matchRepo.Update(ctx, m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // UpdateMatchDate actualiza la fecha y la info de arqueros de un partido.
 func (s *Service) UpdateMatchDate(ctx context.Context, matchID uuid.UUID, playedAt time.Time, goalkeeperInfo string) (*match.Match, error) {
 	m, err := s.matchRepo.FindByID(ctx, matchID)

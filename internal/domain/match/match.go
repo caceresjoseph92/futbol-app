@@ -261,6 +261,18 @@ func (m *Match) Finish(score1, score2 int) error {
 	return nil
 }
 
+// CorrectScore corrige el marcador de un partido ya terminado.
+// A diferencia de Finish, no requiere que el partido esté publicado.
+func (m *Match) CorrectScore(score1, score2 int) error {
+	if score1 < 0 || score2 < 0 {
+		return ErrInvalidScore
+	}
+	m.Team1Score = &score1
+	m.Team2Score = &score2
+	m.Status = StatusFinished
+	return nil
+}
+
 // Team1 retorna los jugadores del equipo 1.
 func (m *Match) Team1() []MatchPlayer {
 	return m.teamPlayers(1)

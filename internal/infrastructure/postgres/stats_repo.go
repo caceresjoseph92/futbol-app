@@ -290,3 +290,112 @@ func (r *StatsRepository) getWinningPairs(ctx context.Context) ([]stats.WinningP
 	}
 	return result, nil
 }
+
+// GetPlayerHistory retorna el historial de partidos de un jugador específico.
+// Cada registro incluye resultado, marcador, compañeros y rivales.
+func (r *StatsRepository) GetPlayerHistory(ctx context.Context, playerID uuid.UUID, limit int) (*stats.PlayerHistory, error) {
+	// Nombre del jugador
+	var playerName string
+	err := r.pool.QueryRow(ctx, `SELECT name FROM players WHERE id = $1`, playerID).Scan(&playerName)
+	if err != nil {
+		return nil, err
+	}
+
+	// Partidos del jugador (terminados), con resultado calculado en SQL
+	rows, err := r.pool.Query(ctx, `
+		SELECT
+			m.id,
+			m.played_at,
+			m.team1_score,
+			m.team2_score,
+			mp.team,
+			CASE
+				WHEN m.team1_score = m.team2_score THEN 'draw'
+				WHEN (mp.team = 1 AND m.team1_score > m.team2_score)
+				  OR (mp.team = 2 AND m.team2_score > m.team1_score) THEN 'win'
+				ELSE 'loss'
+			END AS result
+		FROM match_players mp
+		JOIN matches m ON m.id = mp.match_id
+		WHERE mp.player_id = $1
+		  AND m.status = 'finished'
+		  AND m.team1_score IS NOT NULL
+		  AND m.team2_score IS NOT NULL
+		ORDER BY m.played_at DESC
+		LIMIT $2
+	`, playerID, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var matchIDs []uuid.UUID
+	recordsByID := map[uuid.UUID]*stats.PlayerMatchRecord{}
+
+	for rows.Next() {
+		var rec stats.PlayerMatchRecord
+		var score1, score2 int
+		if err := rows.Scan(&rec.MatchID, &rec.PlayedAt, &score1, &score2, &rec.Team, &rec.Result); err != nil {
+			return nil, err
+		}
+		rec.Score1 = score1
+		rec.Score2 = score2
+		matchIDs = append(matchIDs, rec.MatchID)
+		cp := rec
+		recordsByID[rec.MatchID] = &cp
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	// Para cada partido, cargar compañeros y rivales
+	for _, mid := range matchIDs {
+		rec := recordsByID[mid]
+		pRows, err := r.pool.Query(ctx, `
+			SELECT player_name, team
+			FROM match_players
+			WHERE match_id = $1 AND player_id != $2
+			ORDER BY team, player_name
+		`, mid, playerID)
+		if err != nil {
+			return nil, err
+		}
+		for pRows.Next() {
+			var name string
+			var team int8
+			if err := pRows.Scan(&name, &team); err != nil {
+				pRows.Close()
+				return nil, err
+			}
+			if team == rec.Team {
+				rec.Teammates = append(rec.Teammates, name)
+			} else {
+				rec.Opponents = append(rec.Opponents, name)
+			}
+		}
+		pRows.Close()
+	}
+
+	// Armar historial
+	h := &stats.PlayerHistory{
+		PlayerID:   playerID,
+		PlayerName: playerName,
+	}
+	for _, mid := range matchIDs {
+		rec := *recordsByID[mid]
+		switch rec.Result {
+		case "win":
+			h.Wins++
+		case "loss":
+			h.Losses++
+		case "draw":
+			h.Draws++
+		}
+		h.Matches = append(h.Matches, rec)
+	}
+	total := h.Wins + h.Losses + h.Draws
+	if total > 0 {
+		h.WinPct = math.Round(float64(h.Wins)/float64(total)*1000) / 10
+	}
+	return h, nil
+}

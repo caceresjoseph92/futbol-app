@@ -5,11 +5,14 @@ import (
 	"context"
 
 	"futbol-app/internal/domain/stats"
+
+	"github.com/google/uuid"
 )
 
 // Repository define qué necesita el servicio de la capa de datos.
 type Repository interface {
 	GetSummary(ctx context.Context) (*stats.Summary, error)
+	GetPlayerHistory(ctx context.Context, playerID uuid.UUID, limit int) (*stats.PlayerHistory, error)
 }
 
 // Service orquesta el caso de uso de estadísticas.
@@ -25,4 +28,9 @@ func NewService(repo Repository) *Service {
 // GetSummary retorna todas las estadísticas del grupo.
 func (s *Service) GetSummary(ctx context.Context) (*stats.Summary, error) {
 	return s.repo.GetSummary(ctx)
+}
+
+// GetPlayerHistory retorna el historial de partidos de un jugador.
+func (s *Service) GetPlayerHistory(ctx context.Context, playerID uuid.UUID, limit int) (*stats.PlayerHistory, error) {
+	return s.repo.GetPlayerHistory(ctx, playerID, limit)
 }

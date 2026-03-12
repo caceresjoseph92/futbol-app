@@ -12,10 +12,14 @@ build:
 test:
 	go test ./internal/... -v
 
-## test-coverage: tests con cobertura
-test-coverage:
+## cover: tests con cobertura — abre reporte HTML en el browser
+cover:
 	go test ./internal/... -coverprofile=coverage.out
 	go tool cover -html=coverage.out
+
+## bench: ejecuta benchmarks con estadísticas de memoria
+bench:
+	go test ./internal/... -bench=. -benchmem -run=^$
 
 ## tidy: limpia y actualiza dependencias
 tidy:

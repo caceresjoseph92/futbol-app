@@ -1,0 +1,81 @@
+{{define "content"}}
+<div class="space-y-6">
+  <div class="flex items-center gap-3">
+    <a href="/history" class="text-gray-400 hover:text-gray-600 text-sm">← Historial</a>
+    <h1 class="text-2xl font-bold text-gray-800">{{.History.PlayerName}}</h1>
+  </div>
+
+  <!-- Resumen -->
+  <div class="grid grid-cols-4 gap-4">
+    <div class="bg-white rounded-2xl shadow-sm border p-4 text-center">
+      <p class="text-3xl font-bold text-gray-800">{{len .History.Matches}}</p>
+      <p class="text-xs text-gray-500 mt-1">Partidos</p>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm border p-4 text-center">
+      <p class="text-3xl font-bold text-green-600">{{.History.Wins}}</p>
+      <p class="text-xs text-gray-500 mt-1">Victorias</p>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm border p-4 text-center">
+      <p class="text-3xl font-bold text-red-500">{{.History.Losses}}</p>
+      <p class="text-xs text-gray-500 mt-1">Derrotas</p>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm border p-4 text-center">
+      <p class="text-3xl font-bold text-blue-600">{{printf "%.1f" .History.WinPct}}%</p>
+      <p class="text-xs text-gray-500 mt-1">% Victoria</p>
+    </div>
+  </div>
+
+  <!-- Historial de partidos -->
+  {{if not .History.Matches}}
+    <div class="text-center py-16 text-gray-400">
+      <span class="text-5xl">📋</span>
+      <p class="mt-4">Este jugador aún no tiene partidos terminados.</p>
+    </div>
+  {{else}}
+    <h2 class="text-lg font-semibold text-gray-700">Últimos partidos</h2>
+    <div class="space-y-4">
+      {{range .History.Matches}}
+        <div class="bg-white rounded-2xl shadow-sm border p-5
+          {{if eq .Result "win"}}border-l-4 border-l-green-400
+          {{else if eq .Result "loss"}}border-l-4 border-l-red-400
+          {{else}}border-l-4 border-l-gray-300{{end}}">
+
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-3">
+              <span class="text-gray-600 text-sm">{{.PlayedAt.Format "02/01/2006"}}</span>
+              <span class="text-xs px-2 py-0.5 rounded-full font-semibold
+                {{if eq .Result "win"}}bg-green-100 text-green-700
+                {{else if eq .Result "loss"}}bg-red-100 text-red-700
+                {{else}}bg-gray-100 text-gray-600{{end}}">
+                {{if eq .Result "win"}}Victoria
+                {{else if eq .Result "loss"}}Derrota
+                {{else}}Empate{{end}}
+              </span>
+            </div>
+            <span class="text-xl font-bold text-gray-700">{{.Score1}} — {{.Score2}}</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p class="text-blue-600 font-semibold mb-1 text-xs uppercase tracking-wide">Compañeros</p>
+              <ul class="text-gray-600 space-y-0.5">
+                {{range .Teammates}}
+                  <li class="text-xs">{{.}}</li>
+                {{end}}
+              </ul>
+            </div>
+            <div>
+              <p class="text-red-500 font-semibold mb-1 text-xs uppercase tracking-wide">Rivales</p>
+              <ul class="text-gray-600 space-y-0.5">
+                {{range .Opponents}}
+                  <li class="text-xs">{{.}}</li>
+                {{end}}
+              </ul>
+            </div>
+          </div>
+        </div>
+      {{end}}
+    </div>
+  {{end}}
+</div>
+{{end}}

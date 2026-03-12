@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	appplayer "futbol-app/internal/application/player"
+	appstats "futbol-app/internal/application/stats"
 	"futbol-app/internal/domain/player"
 
 	"github.com/go-chi/chi/v5"
@@ -13,13 +14,14 @@ import (
 
 // PlayerHandler maneja las rutas de jugadores.
 type PlayerHandler struct {
-	service *appplayer.Service
-	tmpl    *Renderer
+	service      *appplayer.Service
+	statsService *appstats.Service
+	tmpl         *Renderer
 }
 
 // NewPlayerHandler crea el handler de jugadores.
-func NewPlayerHandler(service *appplayer.Service, tmpl *Renderer) *PlayerHandler {
-	return &PlayerHandler{service: service, tmpl: tmpl}
+func NewPlayerHandler(service *appplayer.Service, statsService *appstats.Service, tmpl *Renderer) *PlayerHandler {
+	return &PlayerHandler{service: service, statsService: statsService, tmpl: tmpl}
 }
 
 // List muestra la lista de todos los jugadores (solo admin ve ratings).
@@ -171,6 +173,25 @@ func (h *PlayerHandler) Activate(w http.ResponseWriter, r *http.Request) {
 	}
 	setFlash(w, "success", "Jugador activado")
 	http.Redirect(w, r, "/admin/players", http.StatusSeeOther)
+}
+
+// ShowPlayerStats muestra el historial de partidos de un jugador (público).
+func (h *PlayerHandler) ShowPlayerStats(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		http.Error(w, "ID inválido", http.StatusBadRequest)
+		return
+	}
+
+	history, err := h.statsService.GetPlayerHistory(r.Context(), id, 20)
+	if err != nil {
+		http.Error(w, "Jugador no encontrado", http.StatusNotFound)
+		return
+	}
+
+	h.tmpl.ExecuteTemplate(w, "players/stats.html", withFlash(w, r, map[string]any{
+		"History": history,
+	}))
 }
 
 // --- helpers ---

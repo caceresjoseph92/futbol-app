@@ -47,11 +47,30 @@
             </div>
           </div>
 
-          <div class="mt-3 flex gap-2">
+          <div class="mt-3 flex items-center gap-3 flex-wrap">
             <a href="/matches/{{.ID}}" class="text-xs text-green-600 hover:underline">Ver detalle →</a>
             {{if $.IsAdmin}}
               {{if eq .Status "published"}}
                 <a href="/admin/matches/{{.ID}}/edit" class="text-xs text-yellow-600 hover:underline">Editar</a>
+              {{end}}
+              {{if eq .Status "finished"}}
+                {{$id := .ID}}
+                <button onclick="document.getElementById('correct-{{$id}}').classList.toggle('hidden')"
+                        class="text-xs text-orange-600 hover:underline">
+                  Corregir resultado
+                </button>
+                <form id="correct-{{$id}}" action="/admin/matches/{{$id}}/correct-score" method="POST"
+                      class="hidden flex items-center gap-2">
+                  <input type="number" name="score1" value="{{if .Team1Score}}{{.Team1Score}}{{else}}0{{end}}"
+                         min="0" class="w-14 text-center border rounded px-2 py-0.5 text-sm">
+                  <span class="text-gray-400">—</span>
+                  <input type="number" name="score2" value="{{if .Team2Score}}{{.Team2Score}}{{else}}0{{end}}"
+                         min="0" class="w-14 text-center border rounded px-2 py-0.5 text-sm">
+                  <button type="submit"
+                          class="text-xs bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-lg">
+                    Guardar
+                  </button>
+                </form>
               {{end}}
             {{end}}
           </div>

@@ -20,6 +20,8 @@ func NewRouter(
 	r := chi.NewRouter()
 
 	// Middlewares globales
+	// RequestIDMiddleware debe ir primero: genera el ID antes del logging
+	r.Use(RequestIDMiddleware)
 	r.Use(LoggingMiddleware)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.CleanPath)
@@ -44,6 +46,7 @@ func NewRouter(
 		r.Get("/matches/{id}/share", matchHandler.ShareView)
 		r.Get("/history", matchHandler.History)
 		r.Get("/stats", statsHandler.Show)
+		r.Get("/players/{id}/stats", playerHandler.ShowPlayerStats)
 	})
 
 	// Rutas solo admin
@@ -73,6 +76,7 @@ func NewRouter(
 		r.Post("/admin/matches/{id}/swap", matchHandler.SwapPlayers)
 		r.Post("/admin/matches/{id}/publish", matchHandler.Publish)
 		r.Post("/admin/matches/{id}/finish", matchHandler.Finish)
+		r.Post("/admin/matches/{id}/correct-score", matchHandler.CorrectScore)
 
 		// Usuarios
 		r.Get("/admin/users", userHandler.List)

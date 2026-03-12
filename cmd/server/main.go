@@ -73,7 +73,7 @@ func main() {
 
 	// ── Handlers HTTP ────────────────────────────────────────────────────────
 	authHandler   := httphandler.NewAuthHandler(userService, renderer)
-	playerHandler := httphandler.NewPlayerHandler(playerService, renderer)
+	playerHandler := httphandler.NewPlayerHandler(playerService, statsService, renderer)
 	matchHandler  := httphandler.NewMatchHandler(matchService, playerService, renderer, sseHub, statsCache)
 	userHandler   := httphandler.NewUserHandler(userService, renderer)
 	statsHandler  := httphandler.NewStatsHandler(statsService, renderer)

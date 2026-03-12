@@ -447,3 +447,54 @@ func TestAssignTeams_BalanceConsistente(t *testing.T) {
 // Silenciar el "imported and not used" de uuid si no se usa en nuevos tests
 var _ = uuid.UUID{}
 var _ = fmt.Sprintf
+
+// =============================================================================
+// BENCHMARKS
+// =============================================================================
+//
+// Los benchmarks miden el rendimiento real del código.
+// El testing framework los ejecuta con `go test -bench=.`
+//
+// ¿Cómo funcionan?
+//   - b.N: el framework ajusta N automáticamente hasta que el resultado sea estable.
+//     En las primeras corridas puede ser 100, luego 10000, etc.
+//   - b.ResetTimer(): reinicia el contador después de setup costoso (crear jugadores).
+//     Sin esto, el tiempo de setup contamina el resultado del benchmark.
+//   - b.RunParallel: lanza el benchmark en múltiples goroutines simultáneas,
+//     útil para detectar condiciones de carrera o medir throughput concurrente.
+//
+// Comandos útiles:
+//   go test ./internal/domain/match/... -bench=. -benchmem
+//   go test ./internal/domain/match/... -bench=BenchmarkAssignTeams -count=5
+//
+// -benchmem muestra:
+//   - allocs/op: allocaciones de heap por operación
+//   - B/op: bytes alocados por operación
+
+// BenchmarkAssignTeams mide el tiempo de ejecución del algoritmo de balanceo.
+func BenchmarkAssignTeams(b *testing.B) {
+	// Setup: preparar jugadores fuera del loop de medición
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		// Necesitamos un match limpio en cada iteración (AssignTeams modifica el estado)
+		b.StopTimer()
+		m := newMatch()
+		add12Players(m)
+		b.StartTimer()
+
+		m.AssignTeams()
+	}
+}
+
+// BenchmarkAssignTeams_Parallel mide el throughput con múltiples goroutines.
+// Cada goroutine corre el benchmark de forma independiente.
+func BenchmarkAssignTeams_Parallel(b *testing.B) {
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			m := newMatch()
+			add12Players(m)
+			m.AssignTeams()
+		}
+	})
+}

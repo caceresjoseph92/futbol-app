@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"futbol-app/internal/domain/stats"
+
+	"github.com/google/uuid"
 )
 
 // StatsSource es la interfaz del origen de datos real (la DB).
@@ -15,6 +17,7 @@ import (
 // Esto se llama "dependency inversion" — dependemos de abstracciones, no implementaciones.
 type StatsSource interface {
 	GetSummary(ctx context.Context) (*stats.Summary, error)
+	GetPlayerHistory(ctx context.Context, playerID uuid.UUID, limit int) (*stats.PlayerHistory, error)
 }
 
 // StatsCache envuelve un StatsSource y guarda el resultado en memoria por un TTL.
@@ -71,6 +74,11 @@ func (c *StatsCache) GetSummary(ctx context.Context) (*stats.Summary, error) {
 	c.data = data
 	c.expiry = time.Now().Add(c.ttl)
 	return c.data, nil
+}
+
+// GetPlayerHistory delega directamente al origen — no se cachea porque es por jugador.
+func (c *StatsCache) GetPlayerHistory(ctx context.Context, playerID uuid.UUID, limit int) (*stats.PlayerHistory, error) {
+	return c.source.GetPlayerHistory(ctx, playerID, limit)
 }
 
 // Invalidate descarta el caché inmediatamente.
