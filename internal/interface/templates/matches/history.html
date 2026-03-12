@@ -33,7 +33,7 @@
               <p class="text-blue-600 font-semibold mb-1">🔵 Equipo 1</p>
               <ul class="text-gray-600 space-y-0.5">
                 {{range .Team1}}
-                  <li>{{.PlayerName}} <span class="text-gray-400 text-xs capitalize">({{.PrimaryPosition}})</span></li>
+                  <li><a href="/players/{{.PlayerID}}/stats" class="hover:text-blue-600 hover:underline">{{.PlayerName}}</a> <span class="text-gray-400 text-xs capitalize">({{.PrimaryPosition}})</span></li>
                 {{end}}
               </ul>
             </div>
@@ -41,7 +41,7 @@
               <p class="text-red-600 font-semibold mb-1">🔴 Equipo 2</p>
               <ul class="text-gray-600 space-y-0.5">
                 {{range .Team2}}
-                  <li>{{.PlayerName}} <span class="text-gray-400 text-xs capitalize">({{.PrimaryPosition}})</span></li>
+                  <li><a href="/players/{{.PlayerID}}/stats" class="hover:text-blue-600 hover:underline">{{.PlayerName}}</a> <span class="text-gray-400 text-xs capitalize">({{.PrimaryPosition}})</span></li>
                 {{end}}
               </ul>
             </div>
