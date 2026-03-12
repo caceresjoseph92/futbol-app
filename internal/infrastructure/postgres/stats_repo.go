@@ -154,7 +154,7 @@ func (r *StatsRepository) getPlayerStats(ctx context.Context) ([]stats.PlayerSta
 		streak := computeStreak(d.results)
 		streakLabel := formatStreak(streak)
 
-		out = append(out, stats.PlayerStat{
+		ps := stats.PlayerStat{
 			PlayerID:      pid,
 			PlayerName:    d.name,
 			MatchesPlayed: total,
@@ -164,7 +164,9 @@ func (r *StatsRepository) getPlayerStats(ctx context.Context) ([]stats.PlayerSta
 			WinPct:        winPct,
 			Streak:        streak,
 			StreakLabel:   streakLabel,
-		})
+		}
+		ps.Badges = stats.ComputeBadgesFromStat(ps)
+		out = append(out, ps)
 	}
 
 	return out, nil

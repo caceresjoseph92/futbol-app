@@ -18,6 +18,7 @@ type PlayerStat struct {
 	WinPct        float64 // porcentaje de victorias (0-100)
 	Streak        int     // >0 racha ganadora, <0 racha perdedora, 0 = neutral
 	StreakLabel   string  // "3W", "2L", "—"
+	Badges        []Badge
 }
 
 // WinningPair representa dos jugadores y sus victorias compartidas.
@@ -111,6 +112,39 @@ func ComputeBadges(h *PlayerHistory) []Badge {
 		badges = append(badges, Badge{"🧱", "Inquebrantable", "20+ partidos con menos del 25% de derrotas"})
 	}
 	if total >= 10 && h.WinPct >= 45 && h.WinPct < 60 {
+		badges = append(badges, Badge{"💎", "Consistente", "Siempre competitivo, cerca del 50%"})
+	}
+	return badges
+}
+
+// ComputeBadgesFromStat calcula los logros usando las métricas ya agregadas de PlayerStat.
+// No necesita la lista de partidos individuales — usa Streak, MatchesPlayed, Wins, Losses, WinPct.
+func ComputeBadgesFromStat(p PlayerStat) []Badge {
+	var badges []Badge
+	total := p.MatchesPlayed
+
+	if p.Streak >= 3 {
+		badges = append(badges, Badge{"🔥", "En racha", "3 o más victorias seguidas"})
+	}
+	if p.Streak <= -3 {
+		badges = append(badges, Badge{"🧊", "Racha fría", "3 o más derrotas seguidas"})
+	}
+	if total >= 1 && total < 5 {
+		badges = append(badges, Badge{"⚽", "Primeros pasos", "Menos de 5 partidos jugados"})
+	}
+	if total >= 15 {
+		badges = append(badges, Badge{"🎯", "Fiel al grupo", "15 o más partidos jugados"})
+	}
+	if total >= 60 {
+		badges = append(badges, Badge{"👑", "Leyenda", "60 o más partidos jugados"})
+	}
+	if total >= 10 && p.WinPct >= 60 {
+		badges = append(badges, Badge{"🏆", "Ganador nato", "60%+ victorias con al menos 10 partidos"})
+	}
+	if total >= 20 && p.Losses <= total/4 {
+		badges = append(badges, Badge{"🧱", "Inquebrantable", "20+ partidos con menos del 25% de derrotas"})
+	}
+	if total >= 10 && p.WinPct >= 45 && p.WinPct < 60 {
 		badges = append(badges, Badge{"💎", "Consistente", "Siempre competitivo, cerca del 50%"})
 	}
 	return badges
