@@ -17,7 +17,19 @@
   <nav class="bg-green-700 text-white shadow-md">
     <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
       <a href="/" class="text-xl font-bold tracking-wide">⚽ Futbol App</a>
-      <div class="flex gap-4 items-center text-sm">
+
+      <!-- Hamburger button (mobile only) -->
+      <button id="nav-toggle" class="md:hidden p-1 rounded focus:outline-none" aria-label="Menú">
+        <svg id="icon-open" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+        <svg id="icon-close" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+
+      <!-- Desktop links -->
+      <div class="hidden md:flex gap-4 items-center text-sm">
         <a href="/" class="hover:underline">Partido</a>
         <a href="/history" class="hover:underline">Historial</a>
         <a href="/stats" class="hover:underline">Estadísticas</a>
@@ -33,7 +45,42 @@
         {{end}}
       </div>
     </div>
+
+    <!-- Mobile menu -->
+    <div id="nav-menu" class="hidden md:hidden border-t border-green-600">
+      <div class="flex flex-col px-4 py-3 gap-3 text-sm">
+        <a href="/" class="hover:underline">Partido</a>
+        <a href="/history" class="hover:underline">Historial</a>
+        <a href="/stats" class="hover:underline">Estadísticas</a>
+        {{if .IsAdmin}}
+          <a href="/admin/players" class="hover:underline">Jugadores</a>
+          <a href="/admin/users" class="hover:underline">Usuarios</a>
+          <a href="/admin/matches/new" class="bg-white text-green-700 px-3 py-2 rounded font-semibold text-center hover:bg-green-50">+ Nueva publicación</a>
+          <form action="/logout" method="POST">
+            <button class="hover:underline text-green-200">Salir</button>
+          </form>
+        {{else}}
+          <a href="/login" class="bg-white text-green-700 px-3 py-2 rounded font-semibold text-center hover:bg-green-50">Admin</a>
+        {{end}}
+      </div>
+    </div>
   </nav>
+
+  <script>
+    (function() {
+      var btn = document.getElementById('nav-toggle');
+      var menu = document.getElementById('nav-menu');
+      var iconOpen = document.getElementById('icon-open');
+      var iconClose = document.getElementById('icon-close');
+      if (btn) {
+        btn.addEventListener('click', function() {
+          var open = menu.classList.toggle('hidden');
+          iconOpen.classList.toggle('hidden', !open);
+          iconClose.classList.toggle('hidden', open);
+        });
+      }
+    })();
+  </script>
 
   <!-- Flash message -->
   {{if .Flash}}
