@@ -36,6 +36,7 @@ func NewRenderer() (*Renderer, error) {
 		"matches/form.html",
 		"players/list.html",
 		"players/form.html",
+		"players/stats.html",
 		"users/list.html",
 		"users/form.html",
 		"stats/index.html",
