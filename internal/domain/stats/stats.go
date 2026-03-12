@@ -78,7 +78,7 @@ type PlayerHistory struct {
 //   - 🧊 Racha fría:      3+ derrotas consecutivas actuales
 //   - ⚽ Primeros pasos:  1–4 partidos jugados
 //   - 🎯 Fiel al grupo:   15+ partidos jugados
-//   - 👑 Leyenda:         30+ partidos jugados
+//   - 👑 Leyenda:         60+ partidos jugados
 //   - 🏆 Ganador nato:    WinPct >= 60% con mínimo 10 partidos
 //   - 🧱 Inquebrantable:  20+ partidos, derrotas <= 25%
 //   - 💎 Consistente:     10+ partidos, WinPct entre 45–60% (equilibrado)
@@ -101,8 +101,8 @@ func ComputeBadges(h *PlayerHistory) []Badge {
 	if total >= 15 {
 		badges = append(badges, Badge{"🎯", "Fiel al grupo", "15 o más partidos jugados"})
 	}
-	if total >= 30 {
-		badges = append(badges, Badge{"👑", "Leyenda", "30 o más partidos jugados"})
+	if total >= 60 {
+		badges = append(badges, Badge{"👑", "Leyenda", "60 o más partidos jugados"})
 	}
 	if total >= 10 && h.WinPct >= 60 {
 		badges = append(badges, Badge{"🏆", "Ganador nato", "60%+ victorias con al menos 10 partidos"})
