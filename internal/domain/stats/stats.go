@@ -32,12 +32,21 @@ type WinningPair struct {
 	WinPct         float64
 }
 
+// BadgeGroup agrupa a todos los jugadores que tienen un mismo logro.
+type BadgeGroup struct {
+	Icon        string
+	Name        string
+	Description string
+	Players     []PlayerStat
+}
+
 // Summary agrupa todas las estadísticas para la vista.
 type Summary struct {
 	TopAttendance []PlayerStat  // ordenado por partidos jugados desc
 	TopWinners    []PlayerStat  // ordenado por victorias desc
 	Streaks       []PlayerStat  // jugadores con racha activa (>= 2)
 	WinningPairs  []WinningPair // top parejas ganadoras
+	BadgeGroups   []BadgeGroup  // logros agrupados por tipo, con jugadores que los tienen
 }
 
 // PlayerMatchRecord es el registro de un partido individual para un jugador.
@@ -115,6 +124,41 @@ func ComputeBadges(h *PlayerHistory) []Badge {
 		badges = append(badges, Badge{"💎", "Consistente", "Siempre competitivo, cerca del 50%"})
 	}
 	return badges
+}
+
+// badgeOrder define el orden fijo en que se muestran los grupos de logros.
+var badgeOrder = []struct{ name, icon, desc string }{
+	{"Primeros pasos", "⚽", "Menos de 5 partidos jugados"},
+	{"Fiel al grupo", "🎯", "15 o más partidos jugados"},
+	{"Leyenda", "👑", "60 o más partidos jugados"},
+	{"Ganador nato", "🏆", "60%+ victorias con al menos 10 partidos"},
+	{"Inquebrantable", "🧱", "20+ partidos con menos del 25% de derrotas"},
+	{"Consistente", "💎", "Siempre competitivo, cerca del 50%"},
+	{"En racha", "🔥", "3 o más victorias seguidas"},
+	{"Racha fría", "🧊", "3 o más derrotas seguidas"},
+}
+
+// GroupBadges agrupa una lista de PlayerStat por tipo de logro.
+// Solo incluye grupos con al menos un jugador.
+func GroupBadges(players []PlayerStat) []BadgeGroup {
+	byName := map[string][]PlayerStat{}
+	for _, p := range players {
+		for _, b := range p.Badges {
+			byName[b.Name] = append(byName[b.Name], p)
+		}
+	}
+	var groups []BadgeGroup
+	for _, def := range badgeOrder {
+		if ps, ok := byName[def.name]; ok {
+			groups = append(groups, BadgeGroup{
+				Icon:        def.icon,
+				Name:        def.name,
+				Description: def.desc,
+				Players:     ps,
+			})
+		}
+	}
+	return groups
 }
 
 // ComputeBadgesFromStat calcula los logros usando las métricas ya agregadas de PlayerStat.

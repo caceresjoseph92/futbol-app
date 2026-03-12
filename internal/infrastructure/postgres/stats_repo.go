@@ -67,6 +67,7 @@ func (r *StatsRepository) GetSummary(ctx context.Context) (*stats.Summary, error
 		TopWinners:    winners,
 		Streaks:       streaks,
 		WinningPairs:  pairs,
+		BadgeGroups:   stats.GroupBadges(playerStats),
 	}, nil
 }
 
