@@ -7,6 +7,13 @@ import (
 	"github.com/google/uuid"
 )
 
+// WinRateRow contiene el win rate histórico de un jugador.
+// Se usa para enriquecer el algoritmo de balanceo de equipos.
+type WinRateRow struct {
+	WinPct        float64
+	MatchesPlayed int
+}
+
 // PlayerStat reúne todas las métricas de un jugador.
 type PlayerStat struct {
 	PlayerID      uuid.UUID

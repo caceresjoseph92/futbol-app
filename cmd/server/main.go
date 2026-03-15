@@ -58,7 +58,7 @@ func main() {
 
 	// ── Servicios de aplicación (casos de uso) ───────────────────────────────
 	playerService := appplayer.NewService(playerRepo)
-	matchService  := appmatch.NewService(matchRepo, playerRepo)
+	matchService  := appmatch.NewService(matchRepo, playerRepo, statsRepo)
 	userService   := appuser.NewService(userRepo)
 	statsService  := appstats.NewService(statsCache)
 

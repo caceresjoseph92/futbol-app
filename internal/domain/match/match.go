@@ -37,12 +37,14 @@ const RequiredPlayers = 12
 // MatchPlayer representa un jugador dentro de un partido,
 // con su asignación de equipo y el snapshot de su rating en ese momento.
 type MatchPlayer struct {
-	PlayerID       uuid.UUID
-	PlayerName     string
-	PrimaryPosition player.Position
-	Notes          string
-	Team           int8 // 1 o 2
-	RatingSnapshot int8 // rating del jugador al momento del partido
+	PlayerID              uuid.UUID
+	PlayerName            string
+	PrimaryPosition       player.Position
+	Notes                 string
+	Team                  int8    // 1 o 2
+	RatingSnapshot        int8    // rating del jugador al momento del partido
+	WinPctSnapshot        float64 // % victorias históricas (0-100); 0 si sin partidos
+	MatchesPlayedSnapshot int     // partidos jugados al momento; 0 si sin historial
 }
 
 // Match es la entidad central del partido.
@@ -88,6 +90,31 @@ func (m *Match) AddPlayer(p *player.Player) error {
 	return nil
 }
 
+// SetPlayerWinPct actualiza el snapshot de win rate y partidos jugados de un jugador en el partido.
+// Se llama antes de AssignTeams para enriquecer el balanceo con datos históricos.
+func (m *Match) SetPlayerWinPct(playerID uuid.UUID, winPct float64, matchesPlayed int) {
+	for i := range m.Players {
+		if m.Players[i].PlayerID == playerID {
+			m.Players[i].WinPctSnapshot = winPct
+			m.Players[i].MatchesPlayedSnapshot = matchesPlayed
+			return
+		}
+	}
+}
+
+// compositeScore calcula el score de balanceo combinado para un jugador.
+// Si tiene al menos 5 partidos: 50% rating manual + 50% win rate normalizado (0-10).
+// Si tiene menos de 5 partidos: usa rating manual puro (sin historial suficiente).
+func compositeScore(mp MatchPlayer) float64 {
+	const minMatches = 5
+	rating := float64(mp.RatingSnapshot)
+	if mp.MatchesPlayedSnapshot < minMatches {
+		return rating
+	}
+	winRateNorm := mp.WinPctSnapshot / 10.0 // normaliza 0-100 → 0-10
+	return rating*0.5 + winRateNorm*0.5
+}
+
 // AssignTeams ejecuta el algoritmo de balanceo automático y asigna los jugadores a equipos.
 // Requiere exactamente 12 jugadores previamente agregados.
 //
@@ -106,7 +133,7 @@ func (m *Match) AssignTeams() error {
 
 	byRating := func(p []MatchPlayer) {
 		rand.Shuffle(len(p), func(i, j int) { p[i], p[j] = p[j], p[i] })
-		sort.SliceStable(p, func(i, j int) bool { return p[i].RatingSnapshot > p[j].RatingSnapshot })
+		sort.SliceStable(p, func(i, j int) bool { return compositeScore(p[i]) > compositeScore(p[j]) })
 	}
 
 	// Separar por posición primaria
@@ -186,14 +213,14 @@ func (m *Match) AssignTeams() error {
 	// Greedy de suma acumulada procesando bloque a bloque:
 	// al iterar defensas juntos, luego creadores, luego delanteros,
 	// ~la mitad de cada posición cae naturalmente en cada equipo.
-	var sum1, sum2 int32
+	var sum1, sum2 float64
 	for i := range ordered {
 		if sum1 <= sum2 {
 			ordered[i].Team = 1
-			sum1 += int32(ordered[i].RatingSnapshot)
+			sum1 += compositeScore(ordered[i])
 		} else {
 			ordered[i].Team = 2
-			sum2 += int32(ordered[i].RatingSnapshot)
+			sum2 += compositeScore(ordered[i])
 		}
 	}
 

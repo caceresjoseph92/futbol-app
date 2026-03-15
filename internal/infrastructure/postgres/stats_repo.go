@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strings"
 
 	"futbol-app/internal/domain/stats"
 
@@ -292,6 +293,61 @@ func (r *StatsRepository) getWinningPairs(ctx context.Context) ([]stats.WinningP
 		result = append(result, *winsMap[key])
 	}
 	return result, nil
+}
+
+// GetWinRates retorna el porcentaje de victorias y partidos jugados para cada jugador dado.
+// Se usa para enriquecer el algoritmo de balanceo antes de asignar equipos.
+func (r *StatsRepository) GetWinRates(ctx context.Context, playerIDs []uuid.UUID) (map[uuid.UUID]stats.WinRateRow, error) {
+	if len(playerIDs) == 0 {
+		return map[uuid.UUID]stats.WinRateRow{}, nil
+	}
+
+	// Construir placeholders $1, $2, ...
+	placeholders := make([]string, len(playerIDs))
+	args := make([]any, len(playerIDs))
+	for i, id := range playerIDs {
+		placeholders[i] = fmt.Sprintf("$%d", i+1)
+		args[i] = id
+	}
+
+	query := fmt.Sprintf(`
+		SELECT
+			mp.player_id,
+			COUNT(*) AS total,
+			SUM(CASE
+				WHEN (mp.team = 1 AND m.team1_score > m.team2_score)
+				  OR (mp.team = 2 AND m.team2_score > m.team1_score) THEN 1
+				ELSE 0
+			END) AS wins
+		FROM match_players mp
+		JOIN matches m ON m.id = mp.match_id
+		WHERE m.status = 'finished'
+		  AND m.team1_score IS NOT NULL
+		  AND m.team2_score IS NOT NULL
+		  AND mp.player_id IN (%s)
+		GROUP BY mp.player_id
+	`, strings.Join(placeholders, ", "))
+
+	rows, err := r.pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := make(map[uuid.UUID]stats.WinRateRow, len(playerIDs))
+	for rows.Next() {
+		var pid uuid.UUID
+		var total, wins int
+		if err := rows.Scan(&pid, &total, &wins); err != nil {
+			return nil, err
+		}
+		winPct := 0.0
+		if total > 0 {
+			winPct = math.Round(float64(wins)/float64(total)*1000) / 10
+		}
+		result[pid] = stats.WinRateRow{WinPct: winPct, MatchesPlayed: total}
+	}
+	return result, rows.Err()
 }
 
 // GetPlayerHistory retorna el historial de partidos de un jugador específico.

@@ -8,21 +8,30 @@ import (
 
 	"futbol-app/internal/domain/match"
 	"futbol-app/internal/domain/player"
+	"futbol-app/internal/domain/stats"
 
 	"github.com/google/uuid"
 )
 
+// WinRateProvider permite obtener el win rate histórico de un conjunto de jugadores.
+// Se define aquí (donde se usa) siguiendo el principio de interfaces en Go.
+type WinRateProvider interface {
+	GetWinRates(ctx context.Context, playerIDs []uuid.UUID) (map[uuid.UUID]stats.WinRateRow, error)
+}
+
 // Service implementa los casos de uso del partido.
 type Service struct {
-	matchRepo  match.Repository
-	playerRepo player.Repository
+	matchRepo   match.Repository
+	playerRepo  player.Repository
+	winRateRepo WinRateProvider
 }
 
 // NewService crea el servicio con inyección de dependencias.
-func NewService(matchRepo match.Repository, playerRepo player.Repository) *Service {
+func NewService(matchRepo match.Repository, playerRepo player.Repository, winRateRepo WinRateProvider) *Service {
 	return &Service{
-		matchRepo:  matchRepo,
-		playerRepo: playerRepo,
+		matchRepo:   matchRepo,
+		playerRepo:  playerRepo,
+		winRateRepo: winRateRepo,
 	}
 }
 
@@ -83,11 +92,28 @@ func (s *Service) AddPlayersToMatch(ctx context.Context, matchID uuid.UUID, play
 }
 
 // GenerateTeams ejecuta el algoritmo de balanceo automático.
+// Enriquece cada jugador con su win rate histórico antes de asignar equipos.
 func (s *Service) GenerateTeams(ctx context.Context, matchID uuid.UUID) (*match.Match, error) {
 	m, err := s.matchRepo.FindByID(ctx, matchID)
 	if err != nil {
 		return nil, err
 	}
+
+	// Recopilar IDs y obtener win rates de todos los jugadores convocados
+	playerIDs := make([]uuid.UUID, len(m.Players))
+	for i, mp := range m.Players {
+		playerIDs[i] = mp.PlayerID
+	}
+	winRates, err := s.winRateRepo.GetWinRates(ctx, playerIDs)
+	if err != nil {
+		return nil, fmt.Errorf("obteniendo win rates: %w", err)
+	}
+	for _, mp := range m.Players {
+		if wr, ok := winRates[mp.PlayerID]; ok {
+			m.SetPlayerWinPct(mp.PlayerID, wr.WinPct, wr.MatchesPlayed)
+		}
+	}
+
 	if err := m.AssignTeams(); err != nil {
 		return nil, err
 	}
