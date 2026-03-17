@@ -16,12 +16,12 @@
 
     <!-- Vista para copiar -->
     <div id="share-text" class="bg-white border rounded-2xl p-5 shadow-sm font-mono text-sm whitespace-pre-wrap text-gray-700">
-🔵 *Equipo 1*
+🔵 *Equipo 1* (Score: {{.Match.Team1Rating}})
 {{range .Team1}}
 • {{.PlayerName}} — {{.PrimaryPosition}}{{if .Notes}} ({{.Notes}}){{end}}
 {{end}}
 
-🔴 *Equipo 2*
+🔴 *Equipo 2* (Score: {{.Match.Team2Rating}})
 {{range .Team2}}
 • {{.PlayerName}} — {{.PrimaryPosition}}{{if .Notes}} ({{.Notes}}){{end}}
 {{end}}

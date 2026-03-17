@@ -46,7 +46,7 @@
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-lg font-bold text-blue-700">🔵 Equipo 1</h2>
           <span class="text-sm font-semibold bg-blue-100 text-blue-600 px-3 py-1 rounded-full">
-            Poder: {{.Match.Team1Rating}}
+            Score: {{.Match.Team1Rating}}
           </span>
         </div>
         <ul class="space-y-3">
@@ -72,7 +72,7 @@
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-lg font-bold text-red-700">🔴 Equipo 2</h2>
           <span class="text-sm font-semibold bg-red-100 text-red-600 px-3 py-1 rounded-full">
-            Poder: {{.Match.Team2Rating}}
+            Score: {{.Match.Team2Rating}}
           </span>
         </div>
         <ul class="space-y-3">
@@ -112,10 +112,10 @@
     {{end}}
 
     <!-- Texto oculto para copiar al portapapeles -->
-    <div id="whatsapp-text" class="hidden">🔵 *Equipo 1*
+    <div id="whatsapp-text" class="hidden">🔵 *Equipo 1* (Score: {{.Match.Team1Rating}})
 {{range .Match.Team1}}• {{.PlayerName}} — {{.PrimaryPosition}}{{if .Notes}} ({{.Notes}}){{end}}
 {{end}}
-🔴 *Equipo 2*
+🔴 *Equipo 2* (Score: {{.Match.Team2Rating}})
 {{range .Match.Team2}}• {{.PlayerName}} — {{.PrimaryPosition}}{{if .Notes}} ({{.Notes}}){{end}}
 {{end}}{{if .Match.GoalkeeperInfo}}🧤 *Arqueros:* {{.Match.GoalkeeperInfo}}{{end}}</div>
 
