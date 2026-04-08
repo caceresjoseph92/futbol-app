@@ -42,12 +42,12 @@ func (r *StatsRepository) GetSummary(ctx context.Context) (*stats.Summary, error
 		return attendance[i].MatchesPlayed > attendance[j].MatchesPlayed
 	})
 
-	// TopWinners: ordenado por victorias, luego % victorias
+	// TopWinners: ordenado por puntos (V=3, E=1, D=0), luego % victorias como desempate
 	winners := make([]stats.PlayerStat, len(playerStats))
 	copy(winners, playerStats)
 	sort.Slice(winners, func(i, j int) bool {
-		if winners[i].Wins != winners[j].Wins {
-			return winners[i].Wins > winners[j].Wins
+		if winners[i].Points != winners[j].Points {
+			return winners[i].Points > winners[j].Points
 		}
 		return winners[i].WinPct > winners[j].WinPct
 	})
@@ -163,6 +163,7 @@ func (r *StatsRepository) getPlayerStats(ctx context.Context) ([]stats.PlayerSta
 			Wins:          wins,
 			Losses:        losses,
 			Draws:         draws,
+			Points:        wins*3 + draws,
 			WinPct:        winPct,
 			Streak:        streak,
 			StreakLabel:   streakLabel,

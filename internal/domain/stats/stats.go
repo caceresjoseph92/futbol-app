@@ -22,6 +22,7 @@ type PlayerStat struct {
 	Wins          int
 	Losses        int
 	Draws         int
+	Points        int     // 3 por victoria, 1 por empate, 0 por derrota
 	WinPct        float64 // porcentaje de victorias (0-100)
 	Streak        int     // >0 racha ganadora, <0 racha perdedora, 0 = neutral
 	StreakLabel   string  // "3W", "2L", "—"
